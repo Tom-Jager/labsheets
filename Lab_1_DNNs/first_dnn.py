@@ -60,7 +60,7 @@ changed_x = test_x.values[:,0]
 changed_x.shape = (4,1)
 print(changed_x.shape)
 
-print(sess.run(prediction, feed_dict={x: test_x.values[:,0].T, y: test_y.values[:,0].T}).tolist()[0])
+print(sess.run(prediction, feed_dict={x: test_x.values[:,0].T.reshape(4,1), y: test_y.values[:,0].T.reshape(4,1)}).tolist()[0])
 
 
 
