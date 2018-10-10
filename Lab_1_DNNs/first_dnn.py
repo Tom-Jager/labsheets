@@ -35,9 +35,9 @@ train_y = all_y[:100].T
 test_y = all_y[100:150].T
 
 #4x1
-x = tf.placeholder(tf.float32, shape=[n_x, 1])
+x = tf.placeholder(tf.float32, shape=[n_x, None])
 #3x1
-y = tf.placeholder(tf.float32, shape=[n_y, 1])
+y = tf.placeholder(tf.float32, shape=[n_y, None])
 
 #W = 4x3
 W = tf.get_variable("weights", [n_y, n_x],dtype=tf.float32, initializer=tf.zeros_initializer)
