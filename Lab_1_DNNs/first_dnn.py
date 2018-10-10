@@ -51,16 +51,8 @@ gdo = tf.train.GradientDescentOptimizer(0.01)
 optimizer = gdo.minimize(cost)
 
 sess.run(tf.global_variables_initializer())
+sess.run(tf.local_variables_initializer())
 
-tf_metric, tf_metric_update = tf.metrics.accuracy(y, prediction, name="my_metric")
-
-# Isolate the variables stored behind the scenes by the metric operation
-running_vars = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="my_metric")
-
-# Define initializer to initialize/reset running variables
-running_vars_initializer = tf.variables_initializer(var_list=running_vars)
-
-sess.run(running_vars_initializer)
 for i in range(1):
     for epoch in range(10):
         sess.run([optimizer], feed_dict={x: train_x, y: train_y})
