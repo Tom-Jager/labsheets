@@ -60,7 +60,7 @@ running_vars = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="my_metric"
 # Define initializer to initialize/reset running variables
 running_vars_initializer = tf.variables_initializer(var_list=running_vars)
 
-sess.run(tf.running_vars_initializer)
+sess.run(running_vars_initializer)
 for i in range(1):
     for epoch in range(10):
         sess.run([optimizer], feed_dict={x: train_x, y: train_y})
