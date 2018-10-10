@@ -67,5 +67,5 @@ for i in range(1):
         predict_values = tf.argmax(sess.run(prediction, feed_dict={x: train_x, y: train_y}), 1)
         label_values = tf.argmax(train_y, 1)
         acc, acc_op = tf.metrics.accuracy(labels=label_values, predictions=predict_values)
-        sess.run([acc, acc_op])
-    print("Accuracy at epoch " + str(i*epoch) + " = " + str(sess.run([acc])[0]))
+        sess.run(acc_op)
+    print("Accuracy at epoch " + str(i*epoch) + " = " + str(sess.run(acc)))
