@@ -48,12 +48,12 @@ prediction = tf.nn.softmax(tf.matmul(W,x) - b)
 cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(prediction), axis=1))
 
 gdo = tf.train.GradientDescentOptimizer(0.01)
-gdo.minimize(cost)
+optimizer = gdo.minimize(cost)
 
 sess.run(tf.global_variables_initializer())
 
 for epoch in range(10000):
-    sess.run([gdo], feed_dict={x: train_x, y: train_y})
+    sess.run([optimizer], feed_dict={x: train_x, y: train_y})
 
 sess.run(prediction, feed_dict={x: test_x[:1], y: test_y[:1]}).tolist()[0]
 
