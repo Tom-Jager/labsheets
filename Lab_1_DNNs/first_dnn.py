@@ -47,3 +47,4 @@ b = tf.get_variable("bias", [n_y, 1],dtype=tf.float32, initializer=tf.zeros_init
 prediction = tf.nn.softmax(tf.matmul(W,x) - b)
 cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(prediction), axis=1))
 print(cost)
+print("git test")
