@@ -27,3 +27,23 @@ all_y = pd.get_dummies(data.iris_class)
 
 n_x = len(all_x.columns)
 n_y = len(all_y.columns)
+
+train_x = all_x[:100]
+test_x = all_x[100:150]
+
+train_y = all_y[:100]
+test_y = all_y[100:150]
+
+#4x1
+x = tf.placeholder(tf.float32, shape=[n_x, None])
+#3x1
+y = tf.placeholder(tf.float32, shape=[n_y, None])
+
+#W = 4x3
+W = tf.get_variable("weights", [n_y, n_x],dtype=tf.float32, initializer=tf.zeros_initializer)
+#b = 1x3
+b = tf.get_variable("bias", [n_y, 1],dtype=tf.float32, initializer=tf.zeros_initializer)
+
+prediction = tf.nn.softmax(tf.matmul(W,x) - b)
+cost = tf.reduce_mean(-tf.reduce_sum(y * tf.log(prediction), axis=1))
+print(cost)
