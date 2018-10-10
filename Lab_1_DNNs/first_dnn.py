@@ -53,8 +53,13 @@ optimizer = gdo.minimize(cost)
 sess.run(tf.global_variables_initializer())
 
 for i in range(1):
-    for epoch in range(2):
-        print(sess.run([optimizer], feed_dict={x: train_x, y: train_y}))
+    for epoch in range(10):
+        sess.run([optimizer], feed_dict={x: train_x, y: train_y})
+        predict_values = tf.argmax(sess.run(prediction, feed_dict={x: train_x, y: train_y}), 1)
+        label_values = tf.argmax(train_y, 1)
+        acc, acc_op = tf.metrics.accuracy(labels=label_values, predictions=predict_values)
+        sess.run([acc, acc_op])
+    print("Accuracy at epoch " + str(i*epoch) + " = " + str(sess.run([acc])[0]))
 
-#print(sess.run(prediction, feed_dict={x: test_x[:1], y: test_y[:1]}).tolist()[0])
+print(sess.run(prediction, feed_dict={x: test_x[:1], y: test_y[:1]}).tolist()[0])
 
