@@ -54,10 +54,8 @@ sess.run(tf.global_variables_initializer())
 
 for epoch in range(10):
     sess.run([optimizer], feed_dict={x: train_x, y: train_y})
-print(test_x[test_x.columns[0]])
-print(np.shape(test_y.ix[:,0]))
 
-print(sess.run(prediction, feed_dict={x: test_x.ix[:,0].T, y: test_y.ix[:,0].T}).tolist()[0])
+print(sess.run(prediction, feed_dict={x: test_x.tolist()[:,0].T, y: test_y.tolist()[:,0].T}).tolist()[0])
 
 
 
