@@ -52,12 +52,11 @@ optimizer = gdo.minimize(cost)
 
 sess.run(tf.global_variables_initializer())
 
-for i in range(10):
-    for epoch in range(100):
-        sess.run([optimizer], feed_dict={x: train_x, y: train_y})
+for i in range(1):
+    for epoch in range(2):
+        print(np.shape(sess.run([optimizer], feed_dict={x: train_x, y: train_y}))
 
-print(sess.run(prediction, feed_dict={x: test_x[:1], y: test_y[:1]}).tolist()[0])
-print(type(sess.run(prediction, feed_dict={x: test_x[:1], y: test_y[:1]})))
+#print(sess.run(prediction, feed_dict={x: test_x[:1], y: test_y[:1]}).tolist()[0])
 
 
 
