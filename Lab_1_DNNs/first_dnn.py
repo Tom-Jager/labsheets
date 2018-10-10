@@ -52,7 +52,7 @@ optimizer = gdo.minimize(cost)
 
 sess.run(tf.global_variables_initializer())
 
-tf_metric, tf_metric_update = tf.metrics.accuracy(y, x, name="my_metric")
+tf_metric, tf_metric_update = tf.metrics.accuracy(y, prediction, name="my_metric")
 
 # Isolate the variables stored behind the scenes by the metric operation
 running_vars = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="my_metric")
