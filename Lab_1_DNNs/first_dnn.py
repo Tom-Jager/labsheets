@@ -35,9 +35,9 @@ train_y = all_y[:100].T
 test_y = all_y[100:150].T
 
 #4x1
-x = tf.placeholder(tf.float32, shape=[n_x, None])
+x = tf.placeholder(tf.float32, shape=[n_x, 1])
 #3x1
-y = tf.placeholder(tf.float32, shape=[n_y, None])
+y = tf.placeholder(tf.float32, shape=[n_y, 1])
 
 #W = 4x3
 W = tf.get_variable("weights", [n_y, n_x],dtype=tf.float32, initializer=tf.zeros_initializer)
@@ -57,7 +57,7 @@ for epoch in range(10):
 
 print(test_x.values[:,0])
 changed_x = test_x.values[:,0]
-changed_x.shape = (4,None)
+changed_x.shape = (4,1)
 print(changed_x.shape)
 
 print(sess.run(prediction, feed_dict={x: test_x.values[:,0].T, y: test_y.values[:,0].T}).tolist()[0])
