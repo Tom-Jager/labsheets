@@ -55,41 +55,59 @@ sess.run(tf.global_variables_initializer())
 for i in range(1):
     for epoch in range(10):
         sess.run([optimizer], feed_dict={x: train_x, y: train_y})
-        
-h1 = 10
-h2 = 20
-h3 = 10
 
-W_fc1 = tf.Variable(tf.truncated_normal([n_x, h1], stddev=0.1))
-b_fc1 = tf.Variable(tf.constant(0.1, shape=[h1]))
-h_fc1 = tf.nn.relu(tf.matmul(x, W_fc1) + b_fc1)
+g = tf.get_default_graph()
+with g.as_default():
 
-W_fc2 = tf.Variable(tf.truncated_normal([h1, h2], stddev=0.1))
-b_fc2 = tf.Variable(tf.constant(0.1, shape=[h2]))
-h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
+    h1 = 10
+    h2 = 20
+    h3 = 10
 
-W_fc3 = tf.Variable(tf.truncated_normal([h2, h3], stddev=0.1))
-b_fc3 = tf.Variable(tf.constant(0.1, shape=[h3]))
-h_fc3 = tf.nn.relu(tf.matmul(h_fc2, W_fc3) + b_fc3)
+    W_fc1 = tf.Variable(tf.truncated_normal([n_x, h1], stddev=0.1))
+    b_fc1 = tf.Variable(tf.constant(0.1, shape=[h1]))
+    h_fc1 = tf.nn.relu(tf.matmul(x, W_fc1) + b_fc1)
 
-W_ol = tf.Variable(tf.truncated_normal([h3, n_y], stddev=0.1))
-b_ol = tf.Variable(tf.constant(0.1, shape=[n_y]))
-predictions_fcn = tf.nn.relu(tf.matmul(h_fc3, W_ol) + b_ol)
+    W_fc2 = tf.Variable(tf.truncated_normal([h1, h2], stddev=0.1))
+    b_fc2 = tf.Variable(tf.constant(0.1, shape=[h2]))
+    h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
 
-cost_fcn = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=predictions_fcn, scope="Cost_Function")
+    W_fc3 = tf.Variable(tf.truncated_normal([h2, h3], stddev=0.1))
+    b_fc3 = tf.Variable(tf.constant(0.1, shape=[h3]))
+    h_fc3 = tf.nn.relu(tf.matmul(h_fc2, W_fc3) + b_fc3)
 
-adagrad = tf.train.AdagradOptimizer(0.1)
-optimizer_fcn = gdo.minimize(cost_fcn)
+    W_ol = tf.Variable(tf.truncated_normal([h3, n_y], stddev=0.1))
+    b_ol = tf.Variable(tf.constant(0.1, shape=[n_y]))
+    predictions_fcn = tf.nn.relu(tf.matmul(h_fc3, W_ol) + b_ol)
 
-prediction_correct = tf.cast(tf.equal(tf.argmax(predictions_fcn,1), tf.argmax(y,1)), tf.float32)
-accuracy = tf.reduce_mean(prediction_correct)
+    with tf.name_scope('loss'):
+      cost_fcn = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=predictions_fcn, scope="Cost_Function")
+      tf.summary.scalar('loss', cost_fcn)
 
-sess.run(tf.global_variables_initializer())
+    adagrad = tf.train.AdagradOptimizer(0.1)
+    optimizer_fcn = gdo.minimize(cost_fcn)
 
-for i in range(30):
-    for epoch in range(100):
-        sess.run([optimizer_fcn], feed_dict={x: train_x, y: train_y})
-    print("Accuracy at epoch:" + str(i*epoch) + " is " + str(sess.run(accuracy, feed_dict={x: test_x, y: test_y})))
+    prediction_correct = tf.cast(tf.equal(tf.argmax(predictions_fcn,1), tf.argmax(y,1)), tf.float32)
+    accuracy = tf.reduce_mean(prediction_correct)
+
+    sess.run(tf.global_variables_initializer())
+    
+    logs_path = "./logs/"
+    merged = tf.summary.merge_all()
+    train_writer = tf.summary.FileWriter(logs_path + '/train')
+    test_writer = tf.summary.FileWriter(logs_path + '/test')
+
+    for i in range(30):
+      for epoch in range(100):
+        train_summary, _ = sess.run([merged, optimizer_fcn], feed_dict={x: train_x, y: train_y})
+        test_summary, accuracy = sess.run([merged, accuracy], feed_dist={x: test_x, y: test_y})
+        train_writer.add_summary(train_summary, epoch)
+        test_writer.add_summary(test_summary, epoch)
+      print("Accuracy at epoch:" + str(i*epoch) + " is " + str(accuracy))
+
+    
+    
+
+
 
 
 
