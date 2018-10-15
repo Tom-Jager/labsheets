@@ -79,6 +79,6 @@ h_fc3 = tf.nn.relu(tf.matmul(h_fc2, W_fc3) + b_fc3)
 
 W_ol = tf.Variable(tf.truncated_normal([h3, n_y], stddev=0.1))
 b_ol = tf.Variable(tf.constant(0.1, shape=[n_y]))
-predictions_fcn = tf.nn.relu(tf.matmul(H_fc3, W_ol) + b_ol)
+predictions_fcn = tf.nn.relu(tf.matmul(h_fc3, W_ol) + b_ol)
 
 cost_fcn = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=predictions_fcn, scope="Cost_Function")
