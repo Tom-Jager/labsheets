@@ -51,7 +51,6 @@ gdo = tf.train.GradientDescentOptimizer(0.01)
 optimizer = gdo.minimize(cost)
 
 sess.run(tf.global_variables_initializer())
-sess.run(tf.local_variables_initializer())
 
 for i in range(1):
     for epoch in range(10):
@@ -82,3 +81,16 @@ b_ol = tf.Variable(tf.constant(0.1, shape=[n_y]))
 predictions_fcn = tf.nn.relu(tf.matmul(h_fc3, W_ol) + b_ol)
 
 cost_fcn = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=predictions_fcn, scope="Cost_Function")
+
+adagrad = tf.train.AdagradOptimizer(0.1)
+optimizer_fcn = gdo.minimize(cost_fcn)
+
+sess.run(tf.global_variables_initializer())
+
+for i in range(30):
+    for epoch in range(100):
+        sess.run([optimizer_fcn], feed_dict{x: train_x, y: train_y})
+
+
+
+
