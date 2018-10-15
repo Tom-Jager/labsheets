@@ -56,10 +56,6 @@ for i in range(1):
     for epoch in range(10):
         sess.run([optimizer], feed_dict={x: train_x, y: train_y})
         
-    
-#Here I calculate the accuracy at the end from the training set
-
-##
 h1 = 10
 h2 = 20
 h3 = 10
@@ -85,12 +81,15 @@ cost_fcn = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=predictions_f
 adagrad = tf.train.AdagradOptimizer(0.1)
 optimizer_fcn = gdo.minimize(cost_fcn)
 
+prediction_correct = tf.cast(tf.equal(tf.argmax(prediction,1), tf.argmax(y,1)), tf.float32)
+accuracy = tf.reduce_mean(prediction_correct)
+
 sess.run(tf.global_variables_initializer())
 
 for i in range(30):
     for epoch in range(100):
         sess.run([optimizer_fcn], feed_dict={x: train_x, y: train_y})
-
+    print("Accuracy at epoch:" + str(i*epoch) + "is " + str(sess.run(accuracy, feed_dict={x: test_x, y: test_y})))
 
 
 
