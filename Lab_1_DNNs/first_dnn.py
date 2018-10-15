@@ -89,7 +89,7 @@ sess.run(tf.global_variables_initializer())
 
 for i in range(30):
     for epoch in range(100):
-        sess.run([optimizer_fcn], feed_dict{x: train_x, y: train_y})
+        sess.run([optimizer_fcn], feed_dict={x: train_x, y: train_y})
 
 
 
