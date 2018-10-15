@@ -89,7 +89,9 @@ with g.as_default():
   optimizer_fcn = gdo.minimize(cost_fcn)
 
   prediction_correct = tf.cast(tf.equal(tf.argmax(predictions_fcn,1), tf.argmax(y,1)), tf.float32)
-  accuracy = tf.reduce_mean(prediction_correct)
+
+  with tf.name_scope('accuracy'):
+    accuracy = tf.reduce_mean(prediction_correct)
 
   sess.run(tf.global_variables_initializer())
   
@@ -102,9 +104,9 @@ with g.as_default():
     for epoch in range(100):
       train_summary, _ = sess.run([merged, optimizer_fcn], feed_dict={x: train_x, y: train_y})
       test_summary, acc = sess.run([merged, accuracy], feed_dict={x: test_x, y: test_y})
-      train_writer.add_summary(train_summary, epoch)
-      test_writer.add_summary(test_summary, epoch)
-    print("Accuracy at epoch:" + str(i*epoch) + " is " + str(accuracy))
+    train_writer.add_summary(train_summary, epoch)
+    test_writer.add_summary(test_summary, epoch)
+    print("Accuracy at epoch:" + str(i*epoch) + " is " + accuracy)
 
   
   
