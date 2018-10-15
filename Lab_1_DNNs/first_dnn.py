@@ -99,7 +99,7 @@ with g.as_default():
     for i in range(30):
       for epoch in range(100):
         train_summary, _ = sess.run([merged, optimizer_fcn], feed_dict={x: train_x, y: train_y})
-        test_summary, accuracy = sess.run([merged, accuracy], feed_dist={x: test_x, y: test_y})
+        test_summary, accuracy = sess.run([merged, accuracy], feed_dict={x: test_x, y: test_y})
         train_writer.add_summary(train_summary, epoch)
         test_writer.add_summary(test_summary, epoch)
       print("Accuracy at epoch:" + str(i*epoch) + " is " + str(accuracy))
