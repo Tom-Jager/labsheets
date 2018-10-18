@@ -91,9 +91,20 @@ def deepnn(x):
         h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
 
+    with tf.variable_scope('Conv_2'):
+        W_conv2 = weight_variable([5, 5, 32, 64])
+        b_conv2 = bias_variable([64])
+        h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1)
+       
+        # Pooling layer - downsamples by 2X.
+        h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
+                          strides=[1, 2, 2, 1], padding='SAME', name='pooling')
+
         # You need to continue building your convolutional network!
 
-        y_conv = -1
+        conv_out = tf.reshape(h_pool2, [4096])
+
+        y_conv=-1
         return y_conv, img_summary
 
 
