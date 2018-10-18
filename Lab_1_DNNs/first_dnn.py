@@ -86,7 +86,7 @@ with g.as_default():
     tf.summary.scalar('loss', cost_fcn)
 
   adagrad = tf.train.AdagradOptimizer(0.1)
-  optimizer_fcn = gdo.minimize(cost_fcn)
+  optimizer_fcn = adagrad.minimize(cost_fcn)
 
   prediction_correct = tf.cast(tf.equal(tf.argmax(predictions_fcn,1), tf.argmax(y,1)), tf.float32)
 
