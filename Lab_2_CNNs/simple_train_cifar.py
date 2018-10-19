@@ -112,7 +112,7 @@ def deepnn(x):
     with tf.variable_scope('FCN_2'):
         W_fcn2 = weight_variable([1024, 1024])
         b_fcn2 = bias_variable([1024])
-        h_fcn2 = tf.nn.relu(tf.matmul(W_fcn1, W_fcn2) + b_fcn2)
+        h_fcn2 = tf.nn.relu(tf.matmul(h_fcn1, W_fcn2) + b_fcn2)
 
     with tf.variable_scope('Out'):
         W_out = weight_variable([1024, FLAGS.num_classes])
@@ -177,7 +177,7 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            _, summary_str = sess.run([optimiser, training_summary], feed_dict={x: trainImages, y_: trainLabels})
+            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels})
 
             
             if step % (FLAGS.log_frequency + 1)== 0:
