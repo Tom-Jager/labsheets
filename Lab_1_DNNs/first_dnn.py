@@ -92,6 +92,7 @@ with g.as_default():
 
   with tf.name_scope('accuracy'):
     accuracy = tf.reduce_mean(prediction_correct)
+    tf.summary.scalar('accuracy', accuracy)
 
   sess.run(tf.global_variables_initializer())
   
