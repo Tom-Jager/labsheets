@@ -144,7 +144,7 @@ def main(_):
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
     adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    optimizer = adam.optimize(cross_entropy)
+    optimizer = adam.minimize(cross_entropy)
 
     # calculate the prediction and the accuracy
 
