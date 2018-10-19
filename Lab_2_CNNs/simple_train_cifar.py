@@ -100,6 +100,7 @@ def deepnn(x):
         h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
 
+        print(h_pool2)
         # You need to continue building your convolutional network!
     with tf.variable_scope('Conv_out'):
         conv_out = tf.reshape(h_pool2, [1,4096])
