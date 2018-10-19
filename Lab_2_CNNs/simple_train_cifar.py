@@ -99,7 +99,8 @@ def deepnn(x):
         # Pooling layer - downsamples by 2X.
         h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
-
+        print("hi")
+        print("hi")
         print(h_pool2)
         # You need to continue building your convolutional network!
     with tf.variable_scope('Conv_out'):
