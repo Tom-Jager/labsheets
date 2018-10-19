@@ -26,23 +26,23 @@ import cifar10 as cf
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('data-dir', os.getcwd() + '/dataset/',
+tf.app.flags.DEFINE_string('data_dir', os.getcwd() + '/dataset/',
                             'Directory where the dataset will be stored and checkpoint. (default: %(default)s)')
-tf.app.flags.DEFINE_integer('max-steps', 10000,
+tf.app.flags.DEFINE_integer('max_steps', 10000,
                             'Number of mini-batches to train on. (default: %(default)d)')
-tf.app.flags.DEFINE_integer('log-frequency', 10,
+tf.app.flags.DEFINE_integer('log_frequency', 10,
                             'Number of steps between logging results to the console and saving summaries (default: %(default)d)')
-tf.app.flags.DEFINE_integer('save-model', 1000,
+tf.app.flags.DEFINE_integer('save_model', 1000,
                             'Number of steps between model saves (default: %(default)d)')
 
 # Optimisation hyperparameters
-tf.app.flags.DEFINE_integer('batch-size', 128, 'Number of examples per mini-batch (default: %(default)d)')
-tf.app.flags.DEFINE_float('learning-rate', 1e-4, 'Learning rate (default: %(default)d)')
-tf.app.flags.DEFINE_integer('img-width', 32, 'Image width (default: %(default)d)')
-tf.app.flags.DEFINE_integer('img-height', 32, 'Image height (default: %(default)d)')
-tf.app.flags.DEFINE_integer('img-channels', 3, 'Image channels (default: %(default)d)')
-tf.app.flags.DEFINE_integer('num-classes', 10, 'Number of classes (default: %(default)d)')
-tf.app.flags.DEFINE_string('log-dir', '{cwd}/logs/'.format(cwd=os.getcwd()),
+tf.app.flags.DEFINE_integer('batch_size', 128, 'Number of examples per mini-batch (default: %(default)d)')
+tf.app.flags.DEFINE_float('learning_rate', 1e-4, 'Learning rate (default: %(default)d)')
+tf.app.flags.DEFINE_integer('img_width', 32, 'Image width (default: %(default)d)')
+tf.app.flags.DEFINE_integer('img_height', 32, 'Image height (default: %(default)d)')
+tf.app.flags.DEFINE_integer('img_channels', 3, 'Image channels (default: %(default)d)')
+tf.app.flags.DEFINE_integer('num_classes', 10, 'Number of classes (default: %(default)d)')
+tf.app.flags.DEFINE_string('log_dir', '{cwd}/logs/'.format(cwd=os.getcwd()),
                            'Directory where to write event logs and checkpoint. (default: %(default)s)')
 
 
@@ -90,11 +90,36 @@ def deepnn(x):
         # Pooling layer - downsamples by 2X.
         h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
+        
+    with tf.variable_scope('Conv_2'):
+        W_conv2 = weight_variable([5, 5, 32, 64])
+        b_conv2 = bias_variable([64])
+        h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
+              
+        # Pooling layer - downsamples by 2X.
+        h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
+                          strides=[1, 2, 2, 1], padding='SAME', name='pooling')
 
         # You need to continue building your convolutional network!
+    with tf.variable_scope('Conv_out'):
+        conv_out = tf.reshape(h_pool2, [4096])
 
-        y_conv = -1
-        return y_conv, img_summary
+    with tf.variable_scope('FCN_1'):
+        W_fcn1 = weight_variable([4096, 1024])
+        b_fcn1 = bias_variable([1024])
+        h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
+
+    with tf.variable_scope('FCN_2'):
+        W_fcn2 = weight_variable([1024, 1024])
+        b_fcn2 = bias_variable([1024])
+        h_fcn2 = tf.nn.relu(tf.matmul(W_fcn1, W_fcn2) + b_fcn2)
+
+    with tf.variable_scope('Out'):
+        W_out = weight_variable([1024, FLAGS.num_classes])
+        b_out = bias_variable([FLAGS.num_classes])
+        y_conv = tf.nn.relu(tf.matmul(h_fcn2, W_out) + b_out)
+        
+    return y_conv, img_summary
 
 
 def main(_):
@@ -113,13 +138,21 @@ def main(_):
     y_conv, img_summary = deepnn(x)
 
     # Define your loss function - softmax_cross_entropy
-    cross_entropy = 0
+    with tf.variable_scope('x_entropy'):
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
     
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
+    adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    optimizer = adam.optimize(cross_entropy)
+
     # calculate the prediction and the accuracy
-    correct_prediction = 0
-    accuracy = 0
+
+
+    correct_prediction = tf.cast(tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1)), tf.float32)
+    
+    with tf.name_scope('accuracy'):
+        accuracy = tf.reduce_mean(correct_prediction)
     
     loss_summary = tf.summary.scalar('Loss', cross_entropy)
     acc_summary = tf.summary.scalar('Accuracy', accuracy)
@@ -144,22 +177,22 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            ##_, summary_str = sess.run([optimiser, training_summary], feed_dict={x: trainImages, y_: trainLabels})
+            _, summary_str = sess.run([optimiser, training_summary], feed_dict={x: trainImages, y_: trainLabels})
 
             
-            ##if step % (FLAGS.log_frequency + 1)== 0:
-            ##    summary_writer.add_summary(summary_str, step)
+            if step % (FLAGS.log_frequency + 1)== 0:
+               summary_writer.add_summary(summary_str, step)
 
-            ## Validation: Monitoring accuracy using validation set
-            ##if step % FLAGS.log_frequency == 0:
-            ##    validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
-            ##    print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
-            ##    summary_writer_validation.add_summary(summary_str, step)
+            #Validation: Monitoring accuracy using validation set
+            if step % FLAGS.log_frequency == 0:
+               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
+               print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
+               summary_writer_validation.add_summary(summary_str, step)
 
-            ## Save the model checkpoint periodically.
-            ##if step % FLAGS.save_model == 0 or (step + 1) == FLAGS.max_steps:
-            ##    checkpoint_path = os.path.join(run_log_dir + '_train', 'model.ckpt')
-            ##    saver.save(sess, checkpoint_path, global_step=step)
+            #Save the model checkpoint periodically.
+            if step % FLAGS.save_model == 0 or (step + 1) == FLAGS.max_steps:
+               checkpoint_path = os.path.join(run_log_dir + '_train', 'model.ckpt')
+               saver.save(sess, checkpoint_path, global_step=step)
 
         # Testing
 
@@ -172,11 +205,11 @@ def main(_):
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
             (testImages, testLabels) = cifar.getTestBatch(allowSmallerBatches=True)
-            ##test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x: testImages, y_: testLabels})
+            test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x: testImages, y_: testLabels})
 
-            ##batch_count = batch_count + 1
-            ##test_accuracy = test_accuracy + test_accuracy_temp
-            ##evaluated_images = evaluated_images + testLabels.shape[0]
+            batch_count = batch_count + 1
+            test_accuracy = test_accuracy + test_accuracy_temp
+            evaluated_images = evaluated_images + testLabels.shape[0]
 
         test_accuracy = test_accuracy / batch_count
         print('test set: accuracy on test set: %0.3f' % test_accuracy)
