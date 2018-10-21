@@ -136,7 +136,7 @@ def main(_):
 
     # Build the graph for the deep net
     y_conv, img_summary = deepnn(x)
-
+    print(y_conv)
     # Define your loss function - softmax_cross_entropy
     with tf.variable_scope('x_entropy'):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -186,9 +186,7 @@ def main(_):
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
                validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
-            #    print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
-               print("Accuracy at step " + str(step) + " = ")
-               print(accuracy)
+               print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
                summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
