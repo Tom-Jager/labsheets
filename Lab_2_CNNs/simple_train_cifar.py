@@ -187,7 +187,7 @@ def main(_):
             if step % FLAGS.log_frequency == 0:
                validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
             #    print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
-                print('step %d, accuracy on training batch: %g' % (step, accuracy))
+               print('step %d, accuracy on training batch: %g' % (step, accuracy))
                summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
