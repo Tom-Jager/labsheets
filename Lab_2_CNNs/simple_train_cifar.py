@@ -117,7 +117,7 @@ def deepnn(x):
     with tf.variable_scope('Out'):
         W_out = weight_variable([1024, FLAGS.num_classes])
         b_out = bias_variable([FLAGS.num_classes])
-        y_conv = tf.nn.relu(tf.matmul(h_fcn2, W_out) + b_out)
+        y_conv = tf.matmul(h_fcn2, W_out) + b_out
         
     return y_conv, img_summary
 
@@ -187,7 +187,7 @@ def main(_):
             if step % FLAGS.log_frequency == 0:
                validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
             #    print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
-               print('step %d, accuracy on training batch: %g' % (step, accuracy))
+               print("Accuracy at step " + str(step) + " = " + str(accuracy))
                summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
