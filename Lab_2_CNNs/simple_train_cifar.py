@@ -99,10 +99,10 @@ def deepnn(x):
         # Pooling layer - downsamples by 2X.
         h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
-
+                          
         # You need to continue building your convolutional network!
     with tf.variable_scope('Conv_out'):
-        conv_out = tf.reshape(h_pool2, [4096])
+        conv_out = tf.reshape(h_pool2, [-1,4096])
 
     with tf.variable_scope('FCN_1'):
         W_fcn1 = weight_variable([4096, 1024])
@@ -112,12 +112,12 @@ def deepnn(x):
     with tf.variable_scope('FCN_2'):
         W_fcn2 = weight_variable([1024, 1024])
         b_fcn2 = bias_variable([1024])
-        h_fcn2 = tf.nn.relu(tf.matmul(W_fcn1, W_fcn2) + b_fcn2)
+        h_fcn2 = tf.nn.relu(tf.matmul(h_fcn1, W_fcn2) + b_fcn2)
 
     with tf.variable_scope('Out'):
         W_out = weight_variable([1024, FLAGS.num_classes])
         b_out = bias_variable([FLAGS.num_classes])
-        y_conv = tf.nn.relu(tf.matmul(h_fcn2, W_out) + b_out)
+        y_conv = tf.matmul(h_fcn2, W_out) + b_out
         
     return y_conv, img_summary
 
@@ -144,7 +144,7 @@ def main(_):
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
     adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    optimizer = adam.optimize(cross_entropy)
+    optimizer = adam.minimize(cross_entropy)
 
     # calculate the prediction and the accuracy
 
@@ -177,7 +177,7 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            _, summary_str = sess.run([optimiser, training_summary], feed_dict={x: trainImages, y_: trainLabels})
+            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels})
 
             
             if step % (FLAGS.log_frequency + 1)== 0:
@@ -186,7 +186,9 @@ def main(_):
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
                validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
-               print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
+            #    print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
+               print("Accuracy at step " + str(step) + " = ")
+               print(accuracy)
                summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
