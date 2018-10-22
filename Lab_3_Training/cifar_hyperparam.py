@@ -36,7 +36,7 @@ tf.app.flags.DEFINE_integer('save_model', 1000,
                             'Number of steps between model saves (default: %(default)d)')
 
 # Optimisation hyperparameters
-tf.app.flags.DEFINE_integer('batch_size', 256, 'Number of examples per mini-batch (default: %(default)d)')
+tf.app.flags.DEFINE_integer('batch_size', 128, 'Number of examples per mini-batch (default: %(default)d)')
 tf.app.flags.DEFINE_float('learning_rate', 1e-4, 'Learning rate (default: %(default)d)')
 tf.app.flags.DEFINE_integer('img_width', 32, 'Image width (default: %(default)d)')
 tf.app.flags.DEFINE_integer('img_height', 32, 'Image height (default: %(default)d)')
@@ -44,7 +44,8 @@ tf.app.flags.DEFINE_integer('img_channels', 3, 'Image channels (default: %(defau
 tf.app.flags.DEFINE_integer('num_classes', 10, 'Number of classes (default: %(default)d)')
 tf.app.flags.DEFINE_string('log_dir', '{cwd}/logs/'.format(cwd=os.getcwd()),
                            'Directory where to write event logs and checkpoint. (default: %(default)s)')
-
+tf.app.flags.DEFINE_string('decay_steps', 1000, 'Decay steps for learning rate')
+tf.app.flags.DEFINE_string('decay_rate', 0.8, 'Decay rate for learning rate')
 
 run_log_dir = os.path.join(FLAGS.log_dir,
                            'exp_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
@@ -142,8 +143,17 @@ def main(_):
     
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
-    adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    optimizer = adam.minimize(cross_entropy)
+    # adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    # optimizer = adam.minimize(cross_entropy)
+
+    global_step = tf.Variable(0, trainable=False)
+    decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
+                                           FLAGS.decay_steps, FLAGS.decay_rate)
+    # Passing global_step to minimize() will increment it at each step.
+    optimize = (
+      tf.train.AdamOptimizer(decay_learning_rate)
+      .minimize(cross_entropy, global_step=global_step)
+    )
 
     # calculate the prediction and the accuracy
 
