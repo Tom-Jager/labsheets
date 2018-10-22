@@ -150,7 +150,7 @@ def main(_):
     decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
                                            FLAGS.decay_steps, FLAGS.decay_rate)
     # Passing global_step to minimize() will increment it at each step.
-    optimize = (
+    optimizer = (
       tf.train.AdamOptimizer(decay_learning_rate)
       .minimize(cross_entropy, global_step=global_step)
     )
