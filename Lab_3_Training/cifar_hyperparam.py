@@ -143,17 +143,17 @@ def main(_):
     
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
-    # adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    # optimizer = adam.minimize(cross_entropy)
+    adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    optimizer = adam.minimize(cross_entropy)
 
-    global_step = tf.Variable(0, trainable=False)
-    decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
-                                           FLAGS.decay_steps, FLAGS.decay_rate)
-    # Passing global_step to minimize() will increment it at each step.
-    optimizer = (
-      tf.train.AdamOptimizer(decay_learning_rate)
-      .minimize(cross_entropy, global_step=global_step)
-    )
+    # global_step = tf.Variable(0, trainable=False)
+    # decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
+    #                                        FLAGS.decay_steps, FLAGS.decay_rate)
+    # # Passing global_step to minimize() will increment it at each step.
+    # optimizer = (
+    #   tf.train.AdamOptimizer(decay_learning_rate)
+    #   .minimize(cross_entropy, global_step=global_step)
+    # )
 
     # calculate the prediction and the accuracy
 
