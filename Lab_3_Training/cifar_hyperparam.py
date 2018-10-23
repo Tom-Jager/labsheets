@@ -20,6 +20,7 @@ import os
 import os.path
 
 import tensorflow as tf
+import math
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'CIFAR10'))
 import cifar10 as cf
@@ -36,8 +37,8 @@ tf.app.flags.DEFINE_integer('save_model', 1000,
                             'Number of steps between model saves (default: %(default)d)')
 
 # Optimisation hyperparameters
-tf.app.flags.DEFINE_integer('batch_size', 128, 'Number of examples per mini-batch (default: %(default)d)')
-tf.app.flags.DEFINE_float('learning_rate', 1e-4, 'Learning rate (default: %(default)d)')
+tf.app.flags.DEFINE_integer('batch_size', 256, 'Number of examples per mini-batch (default: %(default)d)')
+tf.app.flags.DEFINE_float('learning_rate', 1e-3, 'Learning rate (default: %(default)d)')
 tf.app.flags.DEFINE_integer('img_width', 32, 'Image width (default: %(default)d)')
 tf.app.flags.DEFINE_integer('img_height', 32, 'Image height (default: %(default)d)')
 tf.app.flags.DEFINE_integer('img_channels', 3, 'Image channels (default: %(default)d)')
@@ -48,7 +49,7 @@ tf.app.flags.DEFINE_string('decay_steps', 1000, 'Decay steps for learning rate')
 tf.app.flags.DEFINE_string('decay_rate', 0.8, 'Decay rate for learning rate')
 
 run_log_dir = os.path.join(FLAGS.log_dir,
-                           'exp_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
+                           'exp_BN_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
                                                         lr=FLAGS.learning_rate))
 
 def weight_variable(shape):
@@ -82,15 +83,30 @@ def deepnn(x):
 
     img_summary = tf.summary.image('Input_images', x_image)
 
-    # First convolutional layer - maps one image to 32 feature maps.
-    with tf.variable_scope('Conv_1'):
-        W_conv1 = weight_variable([5, 5, FLAGS.img_channels, 32])
-        b_conv1 = bias_variable([32])
-        h_conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1)
+    # # First convolutional layer - maps one image to 32 feature maps.
+    # with tf.variable_scope('Conv_1'):
+    W_conv1 = weight_variable([5, 5, FLAGS.img_channels, 32])
+    b_conv1 = bias_variable([32])
+    #     h_conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1)
 
-        # Pooling layer - downsamples by 2X.
-        h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1],
-                          strides=[1, 2, 2, 1], padding='SAME', name='pooling')
+    Z1 = tf.nn.conv2d(x_image, W_conv1, strides=[
+                      1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1
+    Z1_mean, Z1_variance = tf.nn.moments(Z1, [0,1,2])
+    Z1_standard_dev = math.sqrt(Z1_variance)
+
+    if Z1_standard_dev == 0:
+      Z1_standard_dev = 0.000001
+
+    Z1_hat = (Z1 - Z1_mean) / Z1_standard_dev
+
+    gamma1 = tf.Variable(tf.ones[None, 32, 32, 32])
+    beta1 = tf.Variable(tf.ones[32])
+
+    B1 = tf.matmul(z1_hat, gamma1) + beta1
+    h_conv1_bn = tf.nn.relu(B1)
+    
+    # Pooling layer - downsamples by 2X.
+    h_pool1 = tf.nn.max_pool(h_conv1_bn, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='pooling')
         
     with tf.variable_scope('Conv_2'):
         W_conv2 = weight_variable([5, 5, 32, 64])
