@@ -119,7 +119,7 @@ def deepnn(x):
         Z2_standard_dev = tf.sqrt(Z2_variance)
 
         if Z2_standard_dev == 0:
-        Z2_standard_dev = 0.000001
+            Z2_standard_dev = 0.000001
 
         Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
 
