@@ -99,7 +99,7 @@ def deepnn(x):
 
     Z1_hat = (Z1 - Z1_mean) / Z1_standard_dev
 
-    gamma1 = weight_variable([FLAGS.batch_size, 32, 32, 32])
+    gamma1 = weight_variable([ 32, 32, 32])
     beta1 = bias_variable([32])
 
     B1 = Z1_hat * gamma1 + beta1
@@ -123,7 +123,7 @@ def deepnn(x):
 
         Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
 
-        gamma2 = weight_variable([FLAGS.batch_size, 16, 16, 64])
+        gamma2 = weight_variable([16, 16, 64])
         beta2 = bias_variable([64])
 
         B2 = gamma2 * Z2_hat + beta2
