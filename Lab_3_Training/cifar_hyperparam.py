@@ -92,7 +92,7 @@ def deepnn(x):
     Z1 = tf.nn.conv2d(x_image, W_conv1, strides=[
                       1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1
     Z1_mean, Z1_variance = tf.nn.moments(Z1, [0,1,2])
-    Z1_standard_dev = math.sqrt(Z1_variance)
+    Z1_standard_dev = tf.sqrt(Z1_variance)
 
     if Z1_standard_dev == 0:
       Z1_standard_dev = 0.000001
@@ -102,9 +102,9 @@ def deepnn(x):
     gamma1 = tf.Variable(tf.ones[None, 32, 32, 32])
     beta1 = tf.Variable(tf.ones[32])
 
-    B1 = tf.matmul(z1_hat, gamma1) + beta1
+    B1 = tf.matmul(Z1_hat, gamma1) + beta1
     h_conv1_bn = tf.nn.relu(B1)
-    
+
     # Pooling layer - downsamples by 2X.
     h_pool1 = tf.nn.max_pool(h_conv1_bn, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='pooling')
         
