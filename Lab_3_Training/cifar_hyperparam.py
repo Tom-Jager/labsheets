@@ -102,7 +102,7 @@ def deepnn(x):
     gamma1 = weight_variable([FLAGS.batch_size, 32, 32, 32])
     beta1 = bias_variable([32])
 
-    B1 = tf.matmul(Z1_hat, gamma1) + beta1
+    B1 = Z1_hat * gamma1 + beta1
     h_conv1_bn = tf.nn.relu(B1)
 
     # Pooling layer - downsamples by 2X.
@@ -123,10 +123,10 @@ def deepnn(x):
 
         Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
 
-        gamma2 = weight_variable([FLAGS.batch_size, 16, 64, 16])
+        gamma2 = weight_variable([FLAGS.batch_size, 16, 16, 64])
         beta2 = bias_variable([64])
 
-        B2 = tf.matmul(Z2_hat, gamma2) + beta2
+        B2 = gamma2 * Z2_hat + beta2
         h_conv2_bn = tf.nn.relu(B2)
 
         # Pooling layer - downsamples by 2X.
