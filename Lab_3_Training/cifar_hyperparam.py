@@ -111,10 +111,26 @@ def deepnn(x):
     with tf.variable_scope('Conv_2'):
         W_conv2 = weight_variable([5, 5, 32, 64])
         b_conv2 = bias_variable([64])
-        h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
-              
+        # h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
+
+        Z2 = tf.nn.conv2d(h_pool1, W_conv2, strides=[
+                      1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2
+        Z2_mean, Z2_variance = tf.nn.moments(Z2, [0,1,2])
+        Z2_standard_dev = tf.sqrt(Z2_variance)
+
+        if Z2_standard_dev == 0:
+        Z2_standard_dev = 0.000001
+
+        Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
+
+        gamma2 = weight_variable([FLAGS.batch_size, 64, 16, 16])
+        beta2 = bias_variable([64])
+
+        B2 = tf.matmul(Z2_hat, gamma2) + beta2
+        h_conv2_bn = tf.nn.relu(B2)
+
         # Pooling layer - downsamples by 2X.
-        h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
+        h_pool2 = tf.nn.max_pool(h_conv2_bn, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
                           
         # You need to continue building your convolutional network!
