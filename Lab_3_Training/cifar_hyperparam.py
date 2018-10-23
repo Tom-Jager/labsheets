@@ -99,8 +99,8 @@ def deepnn(x):
 
     Z1_hat = (Z1 - Z1_mean) / Z1_standard_dev
 
-    gamma1 = tf.Variable(tf.ones[-1, 32, 32, 32])
-    beta1 = tf.Variable(tf.ones[32])
+    gamma1 = weight_variable([None, 32, 32, 32])
+    beta1 = bias_variable([32])
 
     B1 = tf.matmul(Z1_hat, gamma1) + beta1
     h_conv1_bn = tf.nn.relu(B1)
