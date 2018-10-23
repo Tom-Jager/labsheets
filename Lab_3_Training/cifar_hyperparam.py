@@ -123,7 +123,7 @@ def deepnn(x):
 
         Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
 
-        gamma2 = weight_variable([FLAGS.batch_size, 16, 16, 64])
+        gamma2 = weight_variable([FLAGS.batch_size, 16, 64, 16])
         beta2 = bias_variable([64])
 
         B2 = tf.matmul(Z2_hat, gamma2) + beta2
