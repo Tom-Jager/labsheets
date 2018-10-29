@@ -74,7 +74,7 @@ def deepnn(x):
         equal to the logits of classifying the object images into one of 10 classes
         (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck)
       img_summary: a string tensor containing sampled input images.
-    """
+    """ 
     # Reshape to use within a convolutional neural net.  Last dimension is for
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
