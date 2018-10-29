@@ -45,8 +45,8 @@ tf.app.flags.DEFINE_integer('img_channels', 3, 'Image channels (default: %(defau
 tf.app.flags.DEFINE_integer('num_classes', 10, 'Number of classes (default: %(default)d)')
 tf.app.flags.DEFINE_string('log_dir', '{cwd}/logs/'.format(cwd=os.getcwd()),
                            'Directory where to write event logs and checkpoint. (default: %(default)s)')
-tf.app.flags.DEFINE_string('decay_steps', 1000, 'Decay steps for learning rate')
-tf.app.flags.DEFINE_string('decay_rate', 0.8, 'Decay rate for learning rate')
+tf.app.flags.DEFINE_integer('decay_steps', 1000, 'Decay steps for learning rate')
+tf.app.flags.DEFINE_float('decay_rate', 0.8, 'Decay rate for learning rate')
 
 run_log_dir = os.path.join(FLAGS.log_dir,
                            'exp_BN_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
@@ -56,11 +56,11 @@ xavier_initializer = tf.contrib.layers.xavier_initializer(uniform=True)
 
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
-    return tf.Variable(xavier_initializer(shape))
+    return tf.Variable(xavier_initializer(shape), name='weights')
 
 def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
-    return tf.Variable(xavier_initializer(shape))
+    return tf.Variable(xavier_initializer(shape), name='biases')
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying CIFAR10 images.
@@ -79,9 +79,8 @@ def deepnn(x):
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
 
-    
-
     x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
+
     img_summary = tf.summary.image('Input_images', x_image)
 
     conv1 = tf.layers.conv2d(
@@ -160,17 +159,17 @@ def main(_):
     
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
-    adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    optimizer = adam.minimize(cross_entropy)
+    # adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    # optimizer = adam.minimize(cross_entropy)
 
-    # global_step = tf.Variable(0, trainable=False)
-    # decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
-    #                                        FLAGS.decay_steps, FLAGS.decay_rate)
-    # # Passing global_step to minimize() will increment it at each step.
-    # optimizer = (
-    #   tf.train.AdamOptimizer(decay_learning_rate)
-    #   .minimize(cross_entropy, global_step=global_step)
-    # )
+    global_step = tf.Variable(0, trainable=False)
+    decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
+                                           FLAGS.decay_steps, FLAGS.decay_rate)
+    # Passing global_step to minimize() will increment it at each step.
+    optimizer = (
+      tf.train.AdamOptimizer(decay_learning_rate)
+      .minimize(cross_entropy, global_step=global_step)
+    )
 
     # calculate the prediction and the accuracy
 
