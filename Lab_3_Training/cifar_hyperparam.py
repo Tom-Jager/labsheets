@@ -52,15 +52,15 @@ run_log_dir = os.path.join(FLAGS.log_dir,
                            'exp_BN_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
                                                         lr=FLAGS.learning_rate))
 
+xavier_initializer = tf.contrib.layers.xavier_initializer(uniform=True)
+
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial, name='weights')
+    return tf.Variable(xavier_initializer(shape), name='weights')
 
 def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial, name='biases')
+    return tf.Variable(xavier_initializer(shape), name='biases')
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying CIFAR10 images.
