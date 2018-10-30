@@ -10,6 +10,9 @@ See extensive documentation at
 https://www.tensorflow.org/get_started/mnist/pros
 '''
 
+# TODO Flush Summaries Periodically
+
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -53,6 +56,7 @@ run_log_dir = os.path.join(FLAGS.log_dir,
                                                         lr=FLAGS.learning_rate))
 
 xavier_initializer = tf.contrib.layers.xavier_initializer(uniform=True)
+training_flag = True
 
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
@@ -61,6 +65,12 @@ def weight_variable(shape):
 def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
     return tf.Variable(xavier_initializer(shape), name='biases')
+
+def flip_image(image):
+    return tf.image.flip_up_down(image)
+
+def flip_images(batch_images):
+    return tf.map_fn(flip_image, batch_images)
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying CIFAR10 images.
@@ -81,15 +91,18 @@ def deepnn(x):
 
     x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
-    img_summary = tf.summary.image('Input_images', x_image)
+    x_image_changed = tf.cond(training_flag, true_fn= lambda: flip_images(x_image), false_fn= lambda: x_image)
+
+    img_summary = tf.summary.image('Input_images', x_image_changed)
 
     conv1 = tf.layers.conv2d(
-        inputs=x_image,
+        inputs=x_image_changed,
         filters=32,
         kernel_size=[5, 5],
         padding='same',
-        use_bias=False,
+        use_bias=True,
         kernel_initializer=xavier_initializer,
+        bias_initializer=xavier_initializer,
         name='conv1'
     )
     conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1))
@@ -105,8 +118,9 @@ def deepnn(x):
         filters=64,
         kernel_size=[5, 5],
         padding='same',
-        use_bias=False,
+        use_bias=True,
         kernel_initializer=xavier_initializer,
+        bias_initializer=xavier_initializer,
         name='conv2'
     )
     conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2))
@@ -121,21 +135,51 @@ def deepnn(x):
     with tf.variable_scope('Conv_out'):
         conv_out = tf.reshape(pool2, [-1,4096])
 
-    with tf.variable_scope('FCN_1'):
-        W_fcn1 = weight_variable([4096, 1024])
-        b_fcn1 = bias_variable([1024])
-        h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
+    # with tf.variable_scope('FCN_1'):
+    #     W_fcn1 = weight_variable([4096, 1024])
+    #     b_fcn1 = bias_variable([1024])
+    #     h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
 
-    with tf.variable_scope('FCN_2'):
-        W_fcn2 = weight_variable([1024, 1024])
-        b_fcn2 = bias_variable([1024])
-        h_fcn2 = tf.nn.relu(tf.matmul(h_fcn1, W_fcn2) + b_fcn2)
+    fcn_1 = tf.layers.dense(
+        conv_out,
+        1024,
+        activation=tf.nn.relu(),
+        use_bias=True,
+        kernel_initializer=xavier_initializer,
+        bias_initializer=xavier_initializer,
+        name="FCN_1"
+    )
 
-    with tf.variable_scope('Out'):
-        W_out = weight_variable([1024, FLAGS.num_classes])
-        b_out = bias_variable([FLAGS.num_classes])
-        y_conv = tf.matmul(h_fcn2, W_out) + b_out
-        
+    # with tf.variable_scope('FCN_2'):
+    #     W_fcn2 = weight_variable([1024, 1024])
+    #     b_fcn2 = bias_variable([1024])
+    #     h_fcn2 = tf.nn.relu(tf.matmul(h_fcn1, W_fcn2) + b_fcn2)
+
+    fcn_2 = tf.layers.dense(
+        fcn_1,
+        1024,
+        activation=tf.nn.relu(),
+        use_bias=True,
+        kernel_initializer=xavier_initializer,
+        bias_initializer=xavier_initializer,
+        name="FCN_2"
+    )
+
+    # with tf.variable_scope('Out'):
+    #     W_out = weight_variable([1024, FLAGS.num_classes])
+    #     b_out = bias_variable([FLAGS.num_classes])
+    #     y_conv = tf.matmul(h_fcn2, W_out) + b_out
+
+    y_conv = tf.layers.dense(
+        fcn_2,
+        FLAGS.num_classes,
+        activation=tf.nn.relu(),
+        use_bias=True,
+        kernel_initializer=xavier_initializer,
+        bias_initializer=xavier_initializer,
+        name="FCN_Out"
+    )
+
     return y_conv, img_summary
 
 
@@ -226,6 +270,7 @@ def main(_):
         evaluated_images = 0
         test_accuracy = 0
         batch_count = 0
+        training_flag = False
 
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
