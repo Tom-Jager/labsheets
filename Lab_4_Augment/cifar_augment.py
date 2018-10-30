@@ -89,9 +89,9 @@ def deepnn(x):
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
 
-    x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-
-    x_image_changed = tf.cond(training_flag, true_fn= lambda: flip_images(x_image), false_fn= lambda: x_image)
+    #x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
+    x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
+    #x_image_changed = tf.cond(training_flag, true_fn= lambda: flip_images(x_image), false_fn= lambda: x_image)
 
     img_summary = tf.summary.image('Input_images', x_image_changed)
 
