@@ -84,7 +84,7 @@ with g.as_default():
     cost_fcn = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=predictions_fcn, scope="Cost_Function")
     tf.summary.scalar('loss', cost_fcn)
 
-  adagrad = tf.train.AdagradOptimizer(0.1)
+  adagrad = tf.train.AdagradOptimizer(0.01)
   optimizer_fcn = adagrad.minimize(cost_fcn)
 
   prediction_correct = tf.cast(tf.equal(tf.argmax(predictions_fcn,1), tf.argmax(y,1)), tf.float32)
