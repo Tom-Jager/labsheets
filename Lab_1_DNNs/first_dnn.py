@@ -55,9 +55,8 @@ with g.as_default():
 
   sess.run(tf.global_variables_initializer())
 
-  for i in range(1):
-      for epoch in range(10):
-          sess.run([optimizer], feed_dict={x: train_x, y: train_y})
+  for epoch in range(1000):
+    sess.run([optimizer], feed_dict={x: train_x, y: train_y})
 
 
 
@@ -101,13 +100,14 @@ with g.as_default():
   train_writer = tf.summary.FileWriter(logs_path + '/train')
   test_writer = tf.summary.FileWriter(logs_path + '/test')
 
-  for i in range(30):
-    for epoch in range(100):
-      train_summary, _ = sess.run([merged, optimizer_fcn], feed_dict={x: train_x, y: train_y})
+  for epoch in range(3000):
+    train_summary, _ = sess.run([merged, optimizer_fcn], feed_dict={x: train_x, y: train_y})
+    if (epoch % 100 == 0):
       test_summary, acc = sess.run([merged, accuracy], feed_dict={x: test_x, y: test_y})
+
     train_writer.add_summary(train_summary, epoch)
     test_writer.add_summary(test_summary, epoch)
-    print("Accuracy at epoch:" + str(i*epoch) + " is " + str(accuracy))
+    print("Accuracy at epoch:" + str(epoch) + " is " + str(acc))
 
   
   
