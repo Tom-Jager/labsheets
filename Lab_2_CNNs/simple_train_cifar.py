@@ -112,10 +112,10 @@ def deepnn(x):
                           
         # You need to continue building your convolutional network!
     with tf.variable_scope('Conv_out'):
-        conv_out = tf.reshape(h_pool2, [-1,4096])
+        conv_out = tf.reshape(h_pool2, [-1,1024])
 
     with tf.variable_scope('FCN_1'):
-        W_fcn1 = weight_variable([4096, 1024])
+        W_fcn1 = weight_variable([1024, 1024])
         b_fcn1 = bias_variable([1024])
         h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
 
