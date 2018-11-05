@@ -42,7 +42,7 @@ tf.app.flags.DEFINE_integer('img_width', 32, 'Image width (default: %(default)d)
 tf.app.flags.DEFINE_integer('img_height', 32, 'Image height (default: %(default)d)')
 tf.app.flags.DEFINE_integer('img_channels', 3, 'Image channels (default: %(default)d)')
 tf.app.flags.DEFINE_integer('num_classes', 10, 'Number of classes (default: %(default)d)')
-tf.app.flags.DEFINE_string('log_dir', '{cwd}/logs/'.format(cwd=os.getcwd()),
+tf.app.flags.DEFINE_string('log_dir', '{cwd}/logs_second/'.format(cwd=os.getcwd()),
                            'Directory where to write event logs and checkpoint. (default: %(default)s)')
 
 
@@ -90,11 +90,21 @@ def deepnn(x):
         # Pooling layer - downsamples by 2X.
         h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME', name='pooling')
+
+    # First convolutional layer - maps one image to 32 feature maps.
+    with tf.variable_scope('Conv_1a'):
+        W_conv1a = weight_variable([5, 5, 32, 32])
+        b_conv1a = bias_variable([32])
+        h_conv1a = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv1a, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1a)
+
+        # Pooling layer - downsamples by 2X.
+        h_pool1a = tf.nn.max_pool(h_conv1a, ksize=[1, 2, 2, 1],
+                          strides=[1, 2, 2, 1], padding='SAME', name='pooling')
         
     with tf.variable_scope('Conv_2'):
         W_conv2 = weight_variable([5, 5, 32, 64])
         b_conv2 = bias_variable([64])
-        h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
+        h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1a, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
               
         # Pooling layer - downsamples by 2X.
         h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
@@ -102,10 +112,10 @@ def deepnn(x):
                           
         # You need to continue building your convolutional network!
     with tf.variable_scope('Conv_out'):
-        conv_out = tf.reshape(h_pool2, [-1,4096])
+        conv_out = tf.reshape(h_pool2, [-1,1024])
 
     with tf.variable_scope('FCN_1'):
-        W_fcn1 = weight_variable([4096, 1024])
+        W_fcn1 = weight_variable([1024, 1024])
         b_fcn1 = bias_variable([1024])
         h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
 
