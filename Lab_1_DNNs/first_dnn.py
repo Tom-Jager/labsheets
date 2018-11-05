@@ -107,7 +107,7 @@ with g.as_default():
       test_summary, acc = sess.run([merged, accuracy], feed_dict={x: test_x, y: test_y})
     train_writer.add_summary(train_summary, epoch)
     test_writer.add_summary(test_summary, epoch)
-    print("Accuracy at epoch:" + str(i*epoch) + " is " + accuracy)
+    print("Accuracy at epoch:" + str(i*epoch) + " is " + str(accuracy))
 
   
   
