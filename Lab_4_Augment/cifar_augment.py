@@ -66,7 +66,7 @@ def bias_variable(shape):
     return tf.Variable(xavier_initializer(shape), name='biases')
 
 def flip_image(image):
-    return tf.image.flip_up_down(image)
+    return tf.image.random_flip_left_right(image)
 
 def flip_images(batch_images):
     return tf.map_fn(flip_image, batch_images)
