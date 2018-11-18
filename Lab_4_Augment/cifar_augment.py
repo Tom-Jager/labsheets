@@ -247,7 +247,7 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
+            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: False})
 
             
             if step % (FLAGS.log_frequency + 1)== 0:
