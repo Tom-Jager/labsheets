@@ -135,50 +135,50 @@ def deepnn(x, training_flag):
     with tf.variable_scope('Conv_out'):
         conv_out = tf.reshape(pool2, [-1,4096])
 
-    # with tf.variable_scope('FCN_1'):
-    #     W_fcn1 = weight_variable([4096, 1024])
-    #     b_fcn1 = bias_variable([1024])
-    #     h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
+    with tf.variable_scope('FCN_1'):
+        W_fcn1 = weight_variable([4096, 1024])
+        b_fcn1 = bias_variable([1024])
+        h_fcn1 = tf.nn.relu(tf.matmul(conv_out, W_fcn1) + b_fcn1)
 
-    fcn_1 = tf.layers.dense(
-        conv_out,
-        1024,
-        activation=tf.nn.relu,
-        use_bias=True,
-        kernel_initializer=xavier_initializer,
-        bias_initializer=xavier_initializer,
-        name="FCN_1"
-    )
+    # fcn_1 = tf.layers.dense(
+    #     conv_out,
+    #     1024,
+    #     activation=tf.nn.relu,
+    #     use_bias=True,
+    #     kernel_initializer=xavier_initializer,
+    #     bias_initializer=xavier_initializer,
+    #     name="FCN_1"
+    # )
 
-    # with tf.variable_scope('FCN_2'):
-    #     W_fcn2 = weight_variable([1024, 1024])
-    #     b_fcn2 = bias_variable([1024])
-    #     h_fcn2 = tf.nn.relu(tf.matmul(h_fcn1, W_fcn2) + b_fcn2)
+    with tf.variable_scope('FCN_2'):
+        W_fcn2 = weight_variable([1024, 1024])
+        b_fcn2 = bias_variable([1024])
+        h_fcn2 = tf.nn.relu(tf.matmul(h_fcn1, W_fcn2) + b_fcn2)
 
-    fcn_2 = tf.layers.dense(
-        fcn_1,
-        1024,
-        activation=tf.nn.relu,
-        use_bias=True,
-        kernel_initializer=xavier_initializer,
-        bias_initializer=xavier_initializer,
-        name="FCN_2"
-    )
+    # fcn_2 = tf.layers.dense(
+    #     fcn_1,
+    #     1024,
+    #     activation=tf.nn.relu,
+    #     use_bias=True,
+    #     kernel_initializer=xavier_initializer,
+    #     bias_initializer=xavier_initializer,
+    #     name="FCN_2"
+    # )
 
-    # with tf.variable_scope('Out'):
-    #     W_out = weight_variable([1024, FLAGS.num_classes])
-    #     b_out = bias_variable([FLAGS.num_classes])
-    #     y_conv = tf.matmul(h_fcn2, W_out) + b_out
+    with tf.variable_scope('Out'):
+        W_out = weight_variable([1024, FLAGS.num_classes])
+        b_out = bias_variable([FLAGS.num_classes])
+        y_conv = tf.matmul(h_fcn2, W_out) + b_out
 
-    y_conv = tf.layers.dense(
-        fcn_2,
-        FLAGS.num_classes,
-        activation=tf.nn.relu,
-        use_bias=True,
-        kernel_initializer=xavier_initializer,
-        bias_initializer=xavier_initializer,
-        name="FCN_Out"
-    )
+    # y_conv = tf.layers.dense(
+    #     fcn_2,
+    #     FLAGS.num_classes,
+    #     activation=tf.nn.relu,
+    #     use_bias=True,
+    #     kernel_initializer=xavier_initializer,
+    #     bias_initializer=xavier_initializer,
+    #     name="FCN_Out"
+    # )
 
     return y_conv, img_summary
 
