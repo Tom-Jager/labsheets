@@ -143,7 +143,7 @@ def deepnn(x, training_flag):
     fcn_1 = tf.layers.dense(
         conv_out,
         1024,
-        activation=tf.nn.relu(),
+        activation=tf.nn.relu,
         use_bias=True,
         kernel_initializer=xavier_initializer,
         bias_initializer=xavier_initializer,
@@ -158,7 +158,7 @@ def deepnn(x, training_flag):
     fcn_2 = tf.layers.dense(
         fcn_1,
         1024,
-        activation=tf.nn.relu(),
+        activation=tf.nn.relu,
         use_bias=True,
         kernel_initializer=xavier_initializer,
         bias_initializer=xavier_initializer,
@@ -173,7 +173,7 @@ def deepnn(x, training_flag):
     y_conv = tf.layers.dense(
         fcn_2,
         FLAGS.num_classes,
-        activation=tf.nn.relu(),
+        activation=tf.nn.relu,
         use_bias=True,
         kernel_initializer=xavier_initializer,
         bias_initializer=xavier_initializer,
