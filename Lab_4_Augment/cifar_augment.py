@@ -247,7 +247,7 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels})
+            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
 
             
             if step % (FLAGS.log_frequency + 1)== 0:
@@ -255,7 +255,7 @@ def main(_):
 
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
-               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels, training_flag: True})
+               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
                print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
                summary_writer_validation.add_summary(summary_str, step)
 
