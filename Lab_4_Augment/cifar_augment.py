@@ -56,7 +56,6 @@ run_log_dir = os.path.join(FLAGS.log_dir,
                                                         lr=FLAGS.learning_rate))
 
 xavier_initializer = tf.contrib.layers.xavier_initializer(uniform=True)
-training_flag = True
 
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
@@ -72,7 +71,7 @@ def flip_image(image):
 def flip_images(batch_images):
     return tf.map_fn(flip_image, batch_images)
 
-def deepnn(x):
+def deepnn(x, training_flag):
     """deepnn builds the graph for a deep net for classifying CIFAR10 images.
 
   Args:
@@ -88,10 +87,11 @@ def deepnn(x):
     # Reshape to use within a convolutional neural net.  Last dimension is for
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
+    x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
-    #x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-    x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-    #x_image_changed = tf.cond(training_flag, true_fn= lambda: flip_images(x_image), false_fn= lambda: x_image)
+    #x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
+
+    x_image_changed = tf.cond(training_flag, true_fn= lambda: flip_images(x_image), false_fn= lambda: tf.identity(x_image))
 
     img_summary = tf.summary.image('Input_images', x_image_changed)
 
@@ -195,8 +195,9 @@ def main(_):
         # Define loss and optimizer
         y_ = tf.placeholder(tf.float32, [None, FLAGS.num_classes])
 
+    training_flag = tf.placeholder(bool, [])
     # Build the graph for the deep net
-    y_conv, img_summary = deepnn(x)
+    y_conv, img_summary = deepnn(x, training_flag)
     # Define your loss function - softmax_cross_entropy
     with tf.variable_scope('x_entropy'):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -235,8 +236,8 @@ def main(_):
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
 
     with tf.Session() as sess:
-        summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph)
-        summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph)
+        summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph, flush_secs=5)
+        summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=5)
 
         sess.run(tf.global_variables_initializer())
 
@@ -254,7 +255,7 @@ def main(_):
 
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
-               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels})
+               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels, training_flag: True})
                print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
                summary_writer_validation.add_summary(summary_str, step)
 
@@ -270,12 +271,11 @@ def main(_):
         evaluated_images = 0
         test_accuracy = 0
         batch_count = 0
-        training_flag = False
 
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
             (testImages, testLabels) = cifar.getTestBatch(allowSmallerBatches=True)
-            test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x: testImages, y_: testLabels})
+            test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
 
             batch_count = batch_count + 1
             test_accuracy = test_accuracy + test_accuracy_temp
