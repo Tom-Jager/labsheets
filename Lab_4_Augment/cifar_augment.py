@@ -65,11 +65,12 @@ def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
     return tf.Variable(xavier_initializer(shape), name='biases')
 
-def flip_image(image):
+def augment_image(image):
+    tf.image.random_brightness(image, 0.2, seed=2)
     return tf.image.random_flip_left_right(image, seed = 2)
 
-def flip_images(batch_images):
-    return tf.map_fn(flip_image, batch_images)
+def augment_images(batch_images):
+    return tf.map_fn(augment_image, batch_images)
 
 def deepnn(x, training_flag):
     """deepnn builds the graph for a deep net for classifying CIFAR10 images.
@@ -91,7 +92,7 @@ def deepnn(x, training_flag):
 
     #x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
-    x_image_changed = tf.cond(training_flag, true_fn= lambda: flip_images(x_image), false_fn= lambda: tf.identity(x_image))
+    x_image_changed = tf.cond(training_flag, true_fn= lambda: augment_images(x_image), false_fn= lambda: tf.identity(x_image))
 
     img_summary = tf.summary.image('Input_images', x_image_changed)
 
