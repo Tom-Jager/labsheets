@@ -66,7 +66,7 @@ def bias_variable(shape):
     return tf.Variable(xavier_initializer(shape), name='biases')
 
 def augment_image(image):
-    #tf.image.random_brightness(image, 0.2, seed=2)
+    tf.image.random_brightness(image, 0.2, seed=2)
     return tf.image.random_flip_left_right(image, seed = 2)
 
 def augment_images(batch_images):
