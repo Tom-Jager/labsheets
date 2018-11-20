@@ -85,6 +85,7 @@ def deepnn(x, training_flag):
         (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck)
       img_summary: a string tensor containing sampled input images.
     """ 
+    
     # Reshape to use within a convolutional neural net.  Last dimension is for
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
@@ -202,7 +203,7 @@ def main(_):
 
     with tf.variable_scope('model'):
         y_conv = deepnn(x, training_flag)
-        model = CallableModelWrapper(deepnn, 'logits')
+        model = CallableModelWrapper(lambda x: deepnn(x, training_flag), 'logits')
 
     # Define your loss function - softmax_cross_entropy
     with tf.variable_scope('x_entropy'):
@@ -313,7 +314,7 @@ def main(_):
 
         
         adv_test_accuracy = adv_test_accuracy / batch_count
-        print('adv set: accuracy on adv set: %0.3f' % adv_test_accuracy)
+        print('adv set: accuracy on adv set: %0.3f' % test_accuracy)
 
 
 
