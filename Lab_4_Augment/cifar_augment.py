@@ -66,7 +66,7 @@ def bias_variable(shape):
     return tf.Variable(xavier_initializer(shape), name='biases')
 
 def augment_image(image):
-    tf.image.random_brightness(image, 0.2, seed=2)
+    #tf.image.random_brightness(image, 0.2, seed=2)
     return tf.image.random_flip_left_right(image, seed = 2)
 
 def augment_images(batch_images):
@@ -106,7 +106,7 @@ def deepnn(x, training_flag):
         bias_initializer=xavier_initializer,
         name='conv1'
     )
-    conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1))
+    conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1, training=training_flag))
     pool1 = tf.layers.max_pooling2d(
         inputs=conv1_bn,
         pool_size=[2, 2],
@@ -124,7 +124,8 @@ def deepnn(x, training_flag):
         bias_initializer=xavier_initializer,
         name='conv2'
     )
-    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2))
+
+    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag))
     pool2 = tf.layers.max_pooling2d(
         inputs=conv2_bn,
         pool_size=[2, 2],
@@ -211,10 +212,12 @@ def main(_):
     decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
                                            FLAGS.decay_steps, FLAGS.decay_rate)
     # Passing global_step to minimize() will increment it at each step.
-    optimizer = (
-      tf.train.AdamOptimizer(decay_learning_rate)
-      .minimize(cross_entropy, global_step=global_step)
-    )
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):   
+        optimizer = (
+            tf.train.AdamOptimizer(decay_learning_rate)
+            .minimize(cross_entropy, global_step=global_step)
+        )
 
     # calculate the prediction and the accuracy
 
