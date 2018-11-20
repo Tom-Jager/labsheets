@@ -201,7 +201,7 @@ def main(_):
     # Build the graph for the deep net
 
     with tf.variable_scope('model'):
-        y_conv, img_summary = deepnn(x, training_flag)
+        y_conv = deepnn(x, training_flag)
         model = CallableModelWrapper(deepnn, 'logits')
 
     # Define your loss function - softmax_cross_entropy
