@@ -266,7 +266,6 @@ def main(_):
             if step % FLAGS.save_model == 0 or (step + 1) == FLAGS.max_steps:
                checkpoint_path = os.path.join(run_log_dir + '_train', 'model.ckpt')
                saver.save(sess, checkpoint_path, global_step=step)
-
         # Testing
 
         # resetting the internal batch indexes

@@ -262,7 +262,7 @@ def main(_):
             _ = sess.run([optimizer], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
 
             
-            if step % (FLAGS.log_frequency + 1)== 0:
+            #if step % (FLAGS.log_frequency + 1)== 0:
                #summary_writer.add_summary(summary_str, step)
 
             #Validation: Monitoring accuracy using validation set
