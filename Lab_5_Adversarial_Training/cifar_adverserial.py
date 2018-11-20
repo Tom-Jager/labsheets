@@ -10,12 +10,12 @@ See extensive documentation at
 https://www.tensorflow.org/get_started/mnist/pros
 '''
 
-# TODO Flush Summaries Periodically
-
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
+from cleverhans.attacks import FastGradientMethod
+from cleverhans.model import CallableModelWrapper
 
 import sys
 
@@ -66,7 +66,7 @@ def bias_variable(shape):
     return tf.Variable(xavier_initializer(shape), name='biases')
 
 def augment_image(image):
-    image = tf.image.random_brightness(image, 0.3, seed=2)
+    tf.image.random_brightness(image, 0.2, seed=2)
     return tf.image.random_flip_left_right(image, seed = 2)
 
 def augment_images(batch_images):
@@ -181,7 +181,7 @@ def deepnn(x, training_flag):
         name="FCN_Out"
     )
 
-    return y_conv, img_summary
+    return y_conv
 
 
 def main(_):
@@ -189,6 +189,7 @@ def main(_):
 
     # Import data
     cifar = cf.cifar10(batchSize=FLAGS.batch_size, downloadDir=FLAGS.data_dir)
+    cifar.preprocess()  # necessary for adversarial attack to work well.
 
     with tf.variable_scope('inputs'):
         # Create the model
@@ -198,7 +199,11 @@ def main(_):
 
     training_flag = tf.placeholder(bool, [])
     # Build the graph for the deep net
-    y_conv, img_summary = deepnn(x, training_flag)
+
+    with tf.variable_scope('model'):
+        y_conv, img_summary = deepnn(x, training_flag)
+        model = CallableModelWrapper(deepnn, 'logits')
+
     # Define your loss function - softmax_cross_entropy
     with tf.variable_scope('x_entropy'):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -244,23 +249,27 @@ def main(_):
 
         sess.run(tf.global_variables_initializer())
 
+        with tf.variable_scope('model', reuse=True):
+            fgsm = FastGradientMethod(model, sess=sess)
+
         # Training and validation
         for step in range(FLAGS.max_steps):
             # Training: Backpropagation using train set
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
+            x_adv = fgsm.generate(x, eps=0.05, clip_min=0.0, clip_max=1.0)
+            _ = sess.run([optimizer], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
 
             
             if step % (FLAGS.log_frequency + 1)== 0:
-               summary_writer.add_summary(summary_str, step)
+               #summary_writer.add_summary(summary_str, step)
 
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
-               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               validation_accuracy = sess.run([accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
                print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
-               summary_writer_validation.add_summary(summary_str, step)
+               #summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
             if step % FLAGS.save_model == 0 or (step + 1) == FLAGS.max_steps:
@@ -278,7 +287,7 @@ def main(_):
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
             (testImages, testLabels) = cifar.getTestBatch(allowSmallerBatches=True)
-            test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+            test_accuracy_temp = sess.run([accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
 
             batch_count = batch_count + 1
             test_accuracy = test_accuracy + test_accuracy_temp
