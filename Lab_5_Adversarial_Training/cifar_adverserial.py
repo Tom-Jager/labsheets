@@ -277,11 +277,11 @@ def main(_):
 
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
-               validation_accuracy = sess.run([accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               validation_accuracy = sess.run(accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
                print(validation_accuracy)
                print('step %d, test_accuracy on validation batch: %g' % (step, validation_accuracy))
 
-               advs_accuracy = sess.run([adv_accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               advs_accuracy = sess.run(adv_accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
                print('step %d, adv_accuracy on validation batch: %g' % (step, advs_accuracy))
                #summary_writer_validation.add_summary(summary_str, step)
 
