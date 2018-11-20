@@ -126,7 +126,7 @@ def deepnn(x, training_flag):
         name='conv2'
     )
 
-    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag, , name="Conv2"))
+    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag, name="Conv2"))
     pool2 = tf.layers.max_pooling2d(
         inputs=conv2_bn,
         pool_size=[2, 2],
