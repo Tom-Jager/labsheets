@@ -182,6 +182,7 @@ def deepnn(x, training_flag):
         name="FCN_Out"
     )
 
+    #return y_conv, img_summary
     return y_conv
 
 
@@ -258,6 +259,9 @@ def main(_):
             preds_adv = model.get_logits(x_adv) 
 
         adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
+        
+        test_img_summary = tf.summary.image('Test Images', x_image)
+        adv_test_img_summary = tf.summary.image('Adversarial test Images', x_adv)
 
         with tf.variable_scope('adv_accuracy'):
             adv_accuracy = tf.reduce_mean(adv_prediction)
@@ -301,8 +305,8 @@ def main(_):
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
             (testImages, testLabels) = cifar.getTestBatch(allowSmallerBatches=True)
-            test_accuracy_temp = sess.run([accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
-            adv_test_accuracy_temp = sess.run([adv_accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+            test_accuracy_temp = sess.run(accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
+            adv_test_accuracy_temp = sess.run(adv_accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
 
             batch_count = batch_count + 1
             test_accuracy = test_accuracy + test_accuracy_temp
