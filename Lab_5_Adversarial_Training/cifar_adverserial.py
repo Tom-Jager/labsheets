@@ -229,16 +229,18 @@ def main(_):
 
     correct_prediction = tf.cast(tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1)), tf.float32)
     
+
     with tf.name_scope('accuracy'):
         accuracy = tf.reduce_mean(correct_prediction)
+
     
     loss_summary = tf.summary.scalar('Loss', cross_entropy)
     acc_summary = tf.summary.scalar('Accuracy', accuracy)
 
     # summaries for TensorBoard visualisation
-    validation_summary = tf.summary.merge([img_summary, acc_summary])
-    training_summary = tf.summary.merge([img_summary, loss_summary])
-    test_summary = tf.summary.merge([img_summary, acc_summary])
+    #validation_summary = tf.summary.merge([img_summary, acc_summary])
+    #training_summary = tf.summary.merge([img_summary, loss_summary])
+    #test_summary = tf.summary.merge([img_summary, acc_summary])
 
     # saver for checkpoints
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
@@ -251,6 +253,13 @@ def main(_):
 
         with tf.variable_scope('model', reuse=True):
             fgsm = FastGradientMethod(model, sess=sess)
+            x_adv = fgsm.generate(x, eps=0.05, clip_min=0.0, clip_max=1.0)
+            preds_adv = model.get_logits(x_adv) 
+
+        adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
+
+        with tf.variable_scope('adv_accuracy'):
+            adv_accuracy = tf.reduce_mean(adv_prediction)
 
         # Training and validation
         for step in range(FLAGS.max_steps):
@@ -258,7 +267,7 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            x_adv = fgsm.generate(x, eps=0.05, clip_min=0.0, clip_max=1.0)
+            
             _ = sess.run([optimizer], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
 
             
@@ -268,7 +277,10 @@ def main(_):
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
                validation_accuracy = sess.run([accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
-               print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
+               print('step %d, test_accuracy on validation batch: %g' % (step, validation_accuracy))
+
+               advs_accuracy = sess.run([adv_accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               print('step %d, adv_accuracy on validation batch: %g' % (step, advs_accuracy))
                #summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
@@ -282,19 +294,26 @@ def main(_):
         cifar.reset()
         evaluated_images = 0
         test_accuracy = 0
+        adv_test_accuracy = 0
         batch_count = 0
 
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
             (testImages, testLabels) = cifar.getTestBatch(allowSmallerBatches=True)
             test_accuracy_temp = sess.run([accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+            adv_test_accuracy_temp = sess.run([adv_accuracy], feed_dict={x: testImages, y_: testLabels, training_flag: False})
 
             batch_count = batch_count + 1
             test_accuracy = test_accuracy + test_accuracy_temp
+            adv_test_accuracy = adv_test_accuracy + adv_test_accuracy_temp
             evaluated_images = evaluated_images + testLabels.shape[0]
 
         test_accuracy = test_accuracy / batch_count
         print('test set: accuracy on test set: %0.3f' % test_accuracy)
+
+        
+        adv_test_accuracy = adv_test_accuracy / batch_count
+        print('adv set: accuracy on adv set: %0.3f' % adv_test_accuracy)
 
 
 
