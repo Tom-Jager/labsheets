@@ -222,7 +222,7 @@ def main(_):
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):   
         optimizer = (
-            tf.train.AdamOptimizer(decay_learning_rate)
+            tf.train.AdamOptimizer(decay_learning_rate, name="normal")
             .minimize(cross_entropy, global_step=global_step)
         )
 
@@ -268,7 +268,7 @@ def main(_):
 
         with tf.control_dependencies(update_ops):   
             adv_optimizer = (
-                tf.train.AdamOptimizer(decay_learning_rate)
+                tf.train.AdamOptimizer(decay_learning_rate, name="adv")
                 .minimize(adv_cross_entropy, global_step=global_step)
             )
 
