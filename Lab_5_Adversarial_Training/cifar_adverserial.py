@@ -248,8 +248,8 @@ def main(_):
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
 
     with tf.Session() as sess:
-        summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph, flush_secs=5)
-        summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=5)
+        summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph, flush_secs=120)
+        summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=120)
         adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph)
 
         x_img = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
@@ -295,7 +295,7 @@ def main(_):
                print('step %d, test_accuracy on validation batch: %g' % (step, validation_accuracy))
 
                advs_acc, adv_summary_str  = sess.run([adv_accuracy, adv_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
-               print('step %d, adv_accuracy on validation batch: %g' % (step, advs_acc))
+               #print('step %d, adv_accuracy on validation batch: %g' % (step, advs_acc))
                
                adversarial_writer.add_summary(adv_summary_str, step)
                summary_writer_validation.add_summary(summary_str, step)
