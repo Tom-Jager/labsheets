@@ -310,7 +310,7 @@ def main(_):
                print('step %d, test_accuracy on validation batch: %g' % (step, validation_accuracy))
 
                advs_acc, adv_summary_str  = sess.run([adv_accuracy, adv_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
-               #print('step %d, adv_accuracy on validation batch: %g' % (step, advs_acc))
+               print('step %d, adv_accuracy on validation batch: %g' % (step, advs_acc))
                
                adversarial_writer.add_summary(adv_summary_str, step)
                summary_writer_validation.add_summary(summary_str, step)
