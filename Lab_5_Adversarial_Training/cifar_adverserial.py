@@ -263,6 +263,16 @@ def main(_):
 
         adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
         
+        with tf.variable_scope('adv_x_entropy'):
+            adv_cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=preds_adv))
+
+        with tf.control_dependencies(update_ops):   
+            adv_optimizer = (
+                tf.train.AdamOptimizer(decay_learning_rate)
+                .minimize(adv_cross_entropy, global_step=global_step)
+            )
+
+
         x_adv_image = tf.reshape(
             x_adv, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
@@ -281,7 +291,7 @@ def main(_):
 
 
         # Training and validation
-        for step in range(FLAGS.max_steps):
+        for step in range(0, FLAGS.max_steps, 2):
             # Training: Backpropagation using train set
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
@@ -289,7 +299,7 @@ def main(_):
             
             _, summary_str = sess.run([optimizer, loss_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
             
-
+            _ = sess.run(adv_optimizer, feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
             
             if step % (FLAGS.log_frequency + 1)== 0:
                summary_writer.add_summary(summary_str, step)
