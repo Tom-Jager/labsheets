@@ -252,7 +252,7 @@ def main(_):
         #summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=5)
         adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph)
 
-        x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
+        x_img = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
         sess.run(tf.global_variables_initializer())
 
         with tf.variable_scope('model', reuse=True):
@@ -262,9 +262,11 @@ def main(_):
 
         adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
         
-        test_img_summary = tf.summary.image('Test Images', x_image)
+        x_adv_image = tf.reshape(x_adv, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
+
+        test_img_summary = tf.summary.image('Test Images', x_img)
         adv_test_img_summary = tf.summary.image(
-            'Adversarial test Images', x_adv)
+            'Adversarial test Images', x_adv_image)
 
         adv_summary = tf.summary.merge(
             [test_img_summary, adv_test_img_summary])
