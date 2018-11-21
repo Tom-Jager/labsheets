@@ -90,9 +90,8 @@ def deepnn(x, training_flag):
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
     x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-    tf.Print(x_image, [x_image])
-    #x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-
+    
+    #Random augmentations to the image
     x_image_changed = tf.cond(training_flag, true_fn= lambda: augment_images(x_image), false_fn= lambda: tf.identity(x_image))
 
     img_summary = tf.summary.image('Input_images', x_image_changed)
@@ -134,7 +133,6 @@ def deepnn(x, training_flag):
         name='pool2'
     )
 
-        # You need to continue building your convolutional network!
     with tf.variable_scope('Conv_out'):
         conv_out = tf.reshape(pool2, [-1,4096])
 
@@ -199,6 +197,7 @@ def main(_):
         # Define loss and optimizer
         y_ = tf.placeholder(tf.float32, [None, FLAGS.num_classes])
 
+    #Determines whether image should be augmented or not
     training_flag = tf.placeholder(bool, [])
     # Build the graph for the deep net
 
@@ -210,11 +209,8 @@ def main(_):
     with tf.variable_scope('x_entropy'):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
     
-    # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
-    # adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    # optimizer = adam.minimize(cross_entropy)
-
+    #Loss function with decaying learning rate
     global_step = tf.Variable(0, trainable=False)
     decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
                                            FLAGS.decay_steps, FLAGS.decay_rate)
@@ -240,11 +236,6 @@ def main(_):
     acc_summary = tf.summary.scalar('Accuracy', accuracy)
     
 
-    # summaries for TensorBoard visualisation
-    #validation_summary = tf.summary.merge([img_summary, acc_summary])
-    #training_summary = tf.summary.merge([img_summary, loss_summary])
-    #test_summary = tf.summary.merge([img_summary, acc_summary])
-
     # saver for checkpoints
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
 
@@ -253,19 +244,24 @@ def main(_):
         summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=120)
         adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph, flush_secs=120)
 
-        x_img = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-        
+        #Tensor to hold the image to be shown in TensorBoard
+        x_img = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])    
 
         with tf.variable_scope('model', reuse=True):
             fgsm = FastGradientMethod(model, sess=sess)
+            #Generates a tensor which adds noise to x
             x_adv = fgsm.generate(x, eps=0.05, clip_min=0.0, clip_max=1.0)
+            #Tensor that contains the predictions of our neural net when fed an adversarial image
             preds_adv = model.get_logits(x_adv) 
 
+        #Checks whether the adversarial image was classified correctly
         adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
         
+        #Loss function for neural net with adversarial image
         with tf.variable_scope('adv_x_entropy'):
             adv_cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=preds_adv))
 
+        #Optimizer that back propogates with results from adversarial image
         with tf.control_dependencies(update_ops):   
             adv_optimizer = (
                 tf.train.AdamOptimizer(decay_learning_rate, name="adv")
@@ -273,7 +269,8 @@ def main(_):
             )
 
         sess.run(tf.global_variables_initializer())
-        
+
+        #Tensor to hold adversarial image to be shown in TensorBoard
         x_adv_image = tf.reshape(
             x_adv, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
@@ -281,6 +278,7 @@ def main(_):
         adv_test_img_summary = tf.summary.image(
             'Adversarial test Images', x_adv_image)
 
+        #Accuracy of adversarial predictions
         with tf.variable_scope('adv_accuracy'):
             adv_accuracy = tf.reduce_mean(adv_prediction)
 
@@ -297,9 +295,10 @@ def main(_):
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            
+            #Run the neural net as standard with no adversarial images
             _, summary_str = sess.run([optimizer, loss_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
             
+            #Run the neural net but use the results from classifying an adversarial image to adjust the weights
             _ = sess.run(adv_optimizer, feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
             
             if step % (FLAGS.log_frequency + 1)== 0:
