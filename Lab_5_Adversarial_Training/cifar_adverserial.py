@@ -90,7 +90,7 @@ def deepnn(x, training_flag):
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
     x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-    tf.print(x_image)
+    tf.print(x_image, [x_image])
     #x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
     x_image_changed = tf.cond(training_flag, true_fn= lambda: augment_images(x_image), false_fn= lambda: tf.identity(x_image))
