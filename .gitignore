@@ -120,3 +120,7 @@ docs/_build/
 # PyBuilder
 target/
 
+/Lab_3_Training/logs_sub/exp_bs_256_lr_0.001_train/*.data-00000-of-00001
+/Lab_3_Training/logs_sub/exp_bs_256_lr_0.001_train/*.index
+/Lab_3_Training/logs_sub/exp_bs_256_lr_0.001_train/*.meta
+/Lab_3_Training/logs_sub/exp_bs_256_lr_0.001_train/checkpoint
