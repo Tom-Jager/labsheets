@@ -238,6 +238,7 @@ def main(_):
     
     loss_summary = tf.summary.scalar('Loss', cross_entropy)
     acc_summary = tf.summary.scalar('Accuracy', accuracy)
+    
 
     # summaries for TensorBoard visualisation
     #validation_summary = tf.summary.merge([img_summary, acc_summary])
@@ -250,7 +251,7 @@ def main(_):
     with tf.Session() as sess:
         summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph, flush_secs=120)
         summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=120)
-        adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph)
+        adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph, flush_secs=120)
 
         x_img = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
         sess.run(tf.global_variables_initializer())
@@ -269,11 +270,15 @@ def main(_):
         adv_test_img_summary = tf.summary.image(
             'Adversarial test Images', x_adv_image)
 
-        adv_summary = tf.summary.merge(
-            [test_img_summary, adv_test_img_summary])
-
         with tf.variable_scope('adv_accuracy'):
             adv_accuracy = tf.reduce_mean(adv_prediction)
+
+        adv_acc_summary = tf.summary.scalar('Accuracy', adv_accuracy)
+
+        
+        adv_summary = tf.summary.merge(
+            [test_img_summary, adv_test_img_summary, adv_acc_summary])
+
 
         # Training and validation
         for step in range(FLAGS.max_steps):
@@ -330,7 +335,7 @@ def main(_):
 
         
         adv_test_accuracy = adv_test_accuracy / batch_count
-        print('adv set: accuracy on adv set: %0.3f' % test_accuracy)
+        print('adv set: accuracy on adv set: %0.3f' % adv_test_accuracy)
 
 
 
