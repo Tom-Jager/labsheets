@@ -61,11 +61,15 @@ xavier_initializer = tf.contrib.layers.xavier_initializer(uniform=True)
 
 def weight_variable(shape):
     """weight_variable generates a weight variable of a given shape."""
-    return tf.Variable(xavier_initializer(shape), name='weights')
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial, name='weights')
+    # return tf.Variable(xavier_initializer(shape), name='weights')
 
 def bias_variable(shape):
     """bias_variable generates a bias variable of a given shape."""
-    return tf.Variable(xavier_initializer(shape), name='biases')
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial, name='biases')
+    # return tf.Variable(xavier_initializer(shape), name='biases')
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying CIFAR10 images.
