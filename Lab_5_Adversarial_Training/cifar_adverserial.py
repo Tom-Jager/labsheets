@@ -90,7 +90,7 @@ def deepnn(x, training_flag):
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
     x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-
+    tf.print(x_image)
     #x_image_changed = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
     x_image_changed = tf.cond(training_flag, true_fn= lambda: augment_images(x_image), false_fn= lambda: tf.identity(x_image))
@@ -262,6 +262,16 @@ def main(_):
             preds_adv = model.get_logits(x_adv) 
 
         adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
+        
+        with tf.variable_scope('adv_x_entropy'):
+            adv_cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=preds_adv))
+
+        with tf.control_dependencies(update_ops):   
+            adv_optimizer = (
+                tf.train.AdamOptimizer(decay_learning_rate, name="adv")
+                .minimize(adv_cross_entropy, global_step=global_step)
+            )
+
 
         x_adv_image = tf.reshape(
             x_adv, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
@@ -289,7 +299,7 @@ def main(_):
             
             _, summary_str = sess.run([optimizer, loss_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
             
-            _ = sess.run(adv_optimizer, feed_dict={x_image: x_adv_image, y_: trainLabels, training_flag: True})
+            _ = sess.run(adv_optimizer, feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
             
             if step % (FLAGS.log_frequency + 1)== 0:
                summary_writer.add_summary(summary_str, step)
