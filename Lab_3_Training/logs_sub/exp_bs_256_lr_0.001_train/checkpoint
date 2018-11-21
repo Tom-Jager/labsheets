@@ -1,0 +1,2 @@
+model_checkpoint_path: "/mnt/storage/home/tj15299/labsheets/Lab_3_Training/logs/exp_bs_256_lr_0.001_train/model.ckpt-9999"
+all_model_checkpoint_paths: "/mnt/storage/home/tj15299/labsheets/Lab_3_Training/logs/exp_bs_256_lr_0.001_train/model.ckpt-9999"
