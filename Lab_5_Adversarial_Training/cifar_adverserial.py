@@ -254,7 +254,7 @@ def main(_):
         adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph, flush_secs=120)
 
         x_img = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
-        sess.run(tf.global_variables_initializer())
+        
 
         with tf.variable_scope('model', reuse=True):
             fgsm = FastGradientMethod(model, sess=sess)
@@ -272,7 +272,8 @@ def main(_):
                 .minimize(adv_cross_entropy, global_step=global_step)
             )
 
-
+        sess.run(tf.global_variables_initializer())
+        
         x_adv_image = tf.reshape(
             x_adv, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
 
