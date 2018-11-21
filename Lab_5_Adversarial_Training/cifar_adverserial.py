@@ -10,12 +10,12 @@ See extensive documentation at
 https://www.tensorflow.org/get_started/mnist/pros
 '''
 
-# TODO Flush Summaries Periodically
-
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
+from cleverhans.attacks import FastGradientMethod
+from cleverhans.model import CallableModelWrapper
 
 import sys
 
@@ -66,7 +66,7 @@ def bias_variable(shape):
     return tf.Variable(xavier_initializer(shape), name='biases')
 
 def augment_image(image):
-    image = tf.image.random_brightness(image, 0.3, seed=2)
+    tf.image.random_brightness(image, 0.2, seed=2)
     return tf.image.random_flip_left_right(image, seed = 2)
 
 def augment_images(batch_images):
@@ -85,6 +85,7 @@ def deepnn(x, training_flag):
         (airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck)
       img_summary: a string tensor containing sampled input images.
     """ 
+    
     # Reshape to use within a convolutional neural net.  Last dimension is for
     # 'features' - it would be 1 one for a grayscale image, 3 for an RGB image,
     # 4 for RGBA, etc.
@@ -106,7 +107,7 @@ def deepnn(x, training_flag):
         bias_initializer=xavier_initializer,
         name='conv1'
     )
-    conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1, training=training_flag))
+    conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1, training=training_flag, name="Conv1"))
     pool1 = tf.layers.max_pooling2d(
         inputs=conv1_bn,
         pool_size=[2, 2],
@@ -125,7 +126,7 @@ def deepnn(x, training_flag):
         name='conv2'
     )
 
-    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag))
+    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag, name="Conv2"))
     pool2 = tf.layers.max_pooling2d(
         inputs=conv2_bn,
         pool_size=[2, 2],
@@ -181,7 +182,8 @@ def deepnn(x, training_flag):
         name="FCN_Out"
     )
 
-    return y_conv, img_summary
+    #return y_conv, img_summary
+    return y_conv
 
 
 def main(_):
@@ -189,6 +191,7 @@ def main(_):
 
     # Import data
     cifar = cf.cifar10(batchSize=FLAGS.batch_size, downloadDir=FLAGS.data_dir)
+    cifar.preprocess()  # necessary for adversarial attack to work well.
 
     with tf.variable_scope('inputs'):
         # Create the model
@@ -198,7 +201,11 @@ def main(_):
 
     training_flag = tf.placeholder(bool, [])
     # Build the graph for the deep net
-    y_conv, img_summary = deepnn(x, training_flag)
+
+    with tf.variable_scope('model'):
+        y_conv = deepnn(x, training_flag)
+        model = CallableModelWrapper(lambda x: deepnn(x, training_flag), 'logits')
+
     # Define your loss function - softmax_cross_entropy
     with tf.variable_scope('x_entropy'):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -224,16 +231,18 @@ def main(_):
 
     correct_prediction = tf.cast(tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1)), tf.float32)
     
+
     with tf.name_scope('accuracy'):
         accuracy = tf.reduce_mean(correct_prediction)
+
     
     loss_summary = tf.summary.scalar('Loss', cross_entropy)
     acc_summary = tf.summary.scalar('Accuracy', accuracy)
 
     # summaries for TensorBoard visualisation
-    validation_summary = tf.summary.merge([img_summary, acc_summary])
-    training_summary = tf.summary.merge([img_summary, loss_summary])
-    test_summary = tf.summary.merge([img_summary, acc_summary])
+    #validation_summary = tf.summary.merge([img_summary, acc_summary])
+    #training_summary = tf.summary.merge([img_summary, loss_summary])
+    #test_summary = tf.summary.merge([img_summary, acc_summary])
 
     # saver for checkpoints
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
@@ -244,47 +253,72 @@ def main(_):
 
         sess.run(tf.global_variables_initializer())
 
+        with tf.variable_scope('model', reuse=True):
+            fgsm = FastGradientMethod(model, sess=sess)
+            x_adv = fgsm.generate(x, eps=0.05, clip_min=0.0, clip_max=1.0)
+            preds_adv = model.get_logits(x_adv) 
+
+        adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
+        
+        test_img_summary = tf.summary.image('Test Images', x_image)
+        adv_test_img_summary = tf.summary.image('Adversarial test Images', x_adv)
+
+        with tf.variable_scope('adv_accuracy'):
+            adv_accuracy = tf.reduce_mean(adv_prediction)
+
         # Training and validation
         for step in range(FLAGS.max_steps):
             # Training: Backpropagation using train set
             (trainImages, trainLabels) = cifar.getTrainBatch()
             (testImages, testLabels) = cifar.getTestBatch()
             
-            _, summary_str = sess.run([optimizer, training_summary], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
+            
+            _ = sess.run([optimizer], feed_dict={x: trainImages, y_: trainLabels, training_flag: True})
 
             
-            if step % (FLAGS.log_frequency + 1)== 0:
-               summary_writer.add_summary(summary_str, step)
+            #if step % (FLAGS.log_frequency + 1)== 0:
+               #summary_writer.add_summary(summary_str, step)
 
             #Validation: Monitoring accuracy using validation set
             if step % FLAGS.log_frequency == 0:
-               validation_accuracy, summary_str = sess.run([accuracy, validation_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
-               print('step %d, accuracy on validation batch: %g' % (step, validation_accuracy))
-               summary_writer_validation.add_summary(summary_str, step)
+               validation_accuracy = sess.run(accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               print('step %d, test_accuracy on validation batch: %g' % (step, validation_accuracy))
+
+               advs_accuracy = sess.run(adv_accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               print('step %d, adv_accuracy on validation batch: %g' % (step, advs_accuracy))
+               #summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
             if step % FLAGS.save_model == 0 or (step + 1) == FLAGS.max_steps:
                checkpoint_path = os.path.join(run_log_dir + '_train', 'model.ckpt')
                saver.save(sess, checkpoint_path, global_step=step)
+
         # Testing
 
         # resetting the internal batch indexes
         cifar.reset()
         evaluated_images = 0
         test_accuracy = 0
+        adv_test_accuracy = 0
         batch_count = 0
 
         # don't loop back when we reach the end of the test set
         while evaluated_images != cifar.nTestSamples:
             (testImages, testLabels) = cifar.getTestBatch(allowSmallerBatches=True)
-            test_accuracy_temp, _ = sess.run([accuracy, test_summary], feed_dict={x: testImages, y_: testLabels, training_flag: False})
+            test_accuracy_temp = sess.run(accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
+            adv_test_accuracy_temp = sess.run(adv_accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
 
             batch_count = batch_count + 1
             test_accuracy = test_accuracy + test_accuracy_temp
+            adv_test_accuracy = adv_test_accuracy + adv_test_accuracy_temp
             evaluated_images = evaluated_images + testLabels.shape[0]
 
         test_accuracy = test_accuracy / batch_count
         print('test set: accuracy on test set: %0.3f' % test_accuracy)
+
+        
+        adv_test_accuracy = adv_test_accuracy / batch_count
+        print('adv set: accuracy on adv set: %0.3f' % test_accuracy)
 
 
 
