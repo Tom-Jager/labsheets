@@ -48,9 +48,14 @@ tf.app.flags.DEFINE_string('log_dir', '{cwd}/logs/'.format(cwd=os.getcwd()),
 tf.app.flags.DEFINE_integer('decay_steps', 1000, 'Decay steps for learning rate')
 tf.app.flags.DEFINE_float('decay_rate', 0.8, 'Decay rate for learning rate')
 
+# run_log_dir = os.path.join(FLAGS.log_dir,
+#                            'exp_BN_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
+#                                                         lr=FLAGS.learning_rate))
+
 run_log_dir = os.path.join(FLAGS.log_dir,
-                           'exp_BN_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
+                           'exp_bs_{bs}_lr_{lr}'.format(bs=FLAGS.batch_size,
                                                         lr=FLAGS.learning_rate))
+
 
 xavier_initializer = tf.contrib.layers.xavier_initializer(uniform=True)
 
@@ -87,23 +92,23 @@ def deepnn(x):
     # with tf.variable_scope('Conv_1'):
     W_conv1 = weight_variable([5, 5, FLAGS.img_channels, 32])
     b_conv1 = bias_variable([32])
-    #     h_conv1 = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1)
+    h_conv1_bn = tf.nn.relu(tf.nn.conv2d(x_image, W_conv1, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1)
 
-    Z1 = tf.nn.conv2d(x_image, W_conv1, strides=[
-                      1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1
-    Z1_mean, Z1_variance = tf.nn.moments(Z1, [0,1,2])
-    Z1_standard_dev = tf.sqrt(Z1_variance)
+    # Z1 = tf.nn.conv2d(x_image, W_conv1, strides=[
+    #                   1, 1, 1, 1], padding='SAME', name='convolution') + b_conv1
+    # Z1_mean, Z1_variance = tf.nn.moments(Z1, [0,1,2])
+    # Z1_standard_dev = tf.sqrt(Z1_variance)
 
-    if Z1_standard_dev == 0:
-      Z1_standard_dev = 0.000001
+    # if Z1_standard_dev == 0:
+    #   Z1_standard_dev = 0.000001
 
-    Z1_hat = (Z1 - Z1_mean) / Z1_standard_dev
+    # Z1_hat = (Z1 - Z1_mean) / Z1_standard_dev
 
-    gamma1 = weight_variable([ 32, 32, 32])
-    beta1 = bias_variable([32])
+    # gamma1 = weight_variable([ 32, 32, 32])
+    # beta1 = bias_variable([32])
 
-    B1 = Z1_hat * gamma1 + beta1
-    h_conv1_bn = tf.nn.relu(B1)
+    # B1 = Z1_hat * gamma1 + beta1
+    # h_conv1_bn = tf.nn.relu(B1)
 
     # Pooling layer - downsamples by 2X.
     h_pool1 = tf.nn.max_pool(h_conv1_bn, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='pooling')
@@ -111,23 +116,23 @@ def deepnn(x):
     with tf.variable_scope('Conv_2'):
         W_conv2 = weight_variable([5, 5, 32, 64])
         b_conv2 = bias_variable([64])
-        # h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
+        h_conv2_bn = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2)
 
-        Z2 = tf.nn.conv2d(h_pool1, W_conv2, strides=[
-                      1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2
-        Z2_mean, Z2_variance = tf.nn.moments(Z2, [0,1,2])
-        Z2_standard_dev = tf.sqrt(Z2_variance)
+        # Z2 = tf.nn.conv2d(h_pool1, W_conv2, strides=[
+        #               1, 1, 1, 1], padding='SAME', name='convolution') + b_conv2
+        # Z2_mean, Z2_variance = tf.nn.moments(Z2, [0,1,2])
+        # Z2_standard_dev = tf.sqrt(Z2_variance)
 
-        if Z2_standard_dev == 0:
-            Z2_standard_dev = 0.000001
+        # if Z2_standard_dev == 0:
+        #     Z2_standard_dev = 0.000001
 
-        Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
+        # Z2_hat = (Z2 - Z2_mean) / Z2_standard_dev
 
-        gamma2 = weight_variable([16, 16, 64])
-        beta2 = bias_variable([64])
+        # gamma2 = weight_variable([16, 16, 64])
+        # beta2 = bias_variable([64])
 
-        B2 = gamma2 * Z2_hat + beta2
-        h_conv2_bn = tf.nn.relu(B2)
+        # B2 = gamma2 * Z2_hat + beta2
+        # h_conv2_bn = tf.nn.relu(B2)
 
         # Pooling layer - downsamples by 2X.
         h_pool2 = tf.nn.max_pool(h_conv2_bn, ksize=[1, 2, 2, 1],
@@ -175,17 +180,17 @@ def main(_):
     
     # Define your AdamOptimiser, using FLAGS.learning_rate to minimixe the loss function
     
-    # adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
-    # optimizer = adam.minimize(cross_entropy)
+    adam = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+    optimizer = adam.minimize(cross_entropy)
 
     global_step = tf.Variable(0, trainable=False)
     decay_learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step,
                                            FLAGS.decay_steps, FLAGS.decay_rate)
     # Passing global_step to minimize() will increment it at each step.
-    optimizer = (
-      tf.train.AdamOptimizer(decay_learning_rate)
-      .minimize(cross_entropy, global_step=global_step)
-    )
+    #optimizer = (
+    #  tf.train.AdamOptimizer(decay_learning_rate)
+    #  .minimize(cross_entropy, global_step=global_step)
+    #)
 
     # calculate the prediction and the accuracy
 

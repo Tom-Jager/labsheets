@@ -107,7 +107,7 @@ def deepnn(x, training_flag):
         bias_initializer=xavier_initializer,
         name='conv1'
     )
-    conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1, training=training_flag, name="Conv1"))
+    conv1_bn = tf.nn.relu(tf.layers.batch_normalization(conv1, training=training_flag, name="Conv1_norm"))
     pool1 = tf.layers.max_pooling2d(
         inputs=conv1_bn,
         pool_size=[2, 2],
@@ -126,7 +126,7 @@ def deepnn(x, training_flag):
         name='conv2'
     )
 
-    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag, name="Conv2"))
+    conv2_bn = tf.nn.relu(tf.layers.batch_normalization(conv2, training=training_flag, name="Conv2_norm"))
     pool2 = tf.layers.max_pooling2d(
         inputs=conv2_bn,
         pool_size=[2, 2],
@@ -248,9 +248,11 @@ def main(_):
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
 
     with tf.Session() as sess:
-        summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph, flush_secs=5)
-        summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=5)
+        #summary_writer = tf.summary.FileWriter(run_log_dir + '_train', sess.graph, flush_secs=5)
+        #summary_writer_validation = tf.summary.FileWriter(run_log_dir + '_validate', sess.graph, flush_secs=5)
+        adversarial_writer = tf.summary.FileWriter(run_log_dir + "_adversarial", sess.graph)
 
+        x_image = tf.reshape(x, [-1, FLAGS.img_width, FLAGS.img_height, FLAGS.img_channels])
         sess.run(tf.global_variables_initializer())
 
         with tf.variable_scope('model', reuse=True):
@@ -261,7 +263,11 @@ def main(_):
         adv_prediction = tf.cast(tf.equal(tf.argmax(preds_adv,1), tf.argmax(y_,1)), tf.float32)
         
         test_img_summary = tf.summary.image('Test Images', x_image)
-        adv_test_img_summary = tf.summary.image('Adversarial test Images', x_adv)
+        adv_test_img_summary = tf.summary.image(
+            'Adversarial test Images', x_adv)
+
+        adv_summary = tf.summary.merge(
+            [test_img_summary, adv_test_img_summary])
 
         with tf.variable_scope('adv_accuracy'):
             adv_accuracy = tf.reduce_mean(adv_prediction)
@@ -286,7 +292,10 @@ def main(_):
 
                advs_accuracy = sess.run(adv_accuracy, feed_dict={x: testImages, y_: testLabels, training_flag: False})
                print('step %d, adv_accuracy on validation batch: %g' % (step, advs_accuracy))
-               #summary_writer_validation.add_summary(summary_str, step)
+               
+               adv_summary_str = sess.run(adv_summary, feed_dict={x: testImages, y_: testLabels, training_flag: False})
+               adversarial_writer.add_summary(adv_summary_str, step)
+               # summary_writer_validation.add_summary(summary_str, step)
 
             #Save the model checkpoint periodically.
             if step % FLAGS.save_model == 0 or (step + 1) == FLAGS.max_steps:
